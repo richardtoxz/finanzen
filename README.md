@@ -28,7 +28,7 @@ CREATE SCHEMA IF NOT EXISTS finanzen;
 USE finanzen;
 SHOW TABLES;
 SELECT * FROM credenciais;
-SELECT * FROM usuario
+SELECT * FROM usuario;
    ```
 
 ### 2. Backend (FastAPI)
