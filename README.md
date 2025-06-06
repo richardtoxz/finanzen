@@ -24,10 +24,11 @@ finanzen/
 1. Instale o MySQL e MySQL Workbench
 2. No MySQL Workbench, execute:
    ```sql
-   CREATE DATABASE finanzen;
-   CREATE USER 'finanzen_user'@'localhost' IDENTIFIED BY 'sua_senha_segura';
-   GRANT ALL PRIVILEGES ON finanzen.* TO 'finanzen_user'@'localhost';
-   FLUSH PRIVILEGES;
+CREATE SCHEMA IF NOT EXISTS finanzen;
+USE finanzen;
+SHOW TABLES;
+SELECT * FROM credenciais;
+SELECT * FROM usuario
    ```
 
 ### 2. Backend (FastAPI)
@@ -135,14 +136,6 @@ npm test
 - Autenticação via JWT
 - Variáveis de ambiente seguras
 - Logs sanitizados
-
-## Contribuição
-
-1. Fork o projeto
-2. Crie uma branch (`git checkout -b feature/NovaFeature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona NovaFeature'`)
-4. Push para a branch (`git push origin feature/NovaFeature`)
-5. Abra um Pull Request
 
 ## Licença
 
