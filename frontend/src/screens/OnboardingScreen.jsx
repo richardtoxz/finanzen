@@ -3,7 +3,8 @@ import OptionButton from '../components/OptionButton';
 import { useForm } from '../hooks/useForm';
 
 const OnboardingScreen = ({ user, onComplete }) => {
-  const { formData, handleChange, setFormData } = useForm({ name: user?.name || '', objectives: [], incomes: [] }, {});
+  // Atualize o estado inicial:
+  const { formData, handleChange, setFormData } = useForm({ name: user?.name || '', objectives: [], income: '' }, {});
   const [isLoading, setIsLoading] = useState(false);
 
   const objectives = [
@@ -11,7 +12,6 @@ const OnboardingScreen = ({ user, onComplete }) => {
     { id: 'emergency', label: 'Criar reserva de emergência', icon: '🛡️' },
     { id: 'income', label: 'Organizar e gerenciar receitas', icon: '📊' },
     { id: 'car', label: 'Comprar um carro', icon: '🚗' },
-    { id: 'other', label: 'Outro', icon: '💭' }
   ];
   const incomeRanges = [
     { id: 'up-1000', label: 'Até R$ 1.000' },
@@ -26,7 +26,15 @@ const OnboardingScreen = ({ user, onComplete }) => {
     [field]: prev[field].includes(id) ? prev[field].filter(itemId => itemId !== id) : [...prev[field], id]
   }));
 
-  const isFormValid = formData.name.trim() && formData.objectives.length > 0 && formData.incomes.length > 0;
+  // Atualize a validação do formulário:
+  const isFormValid = formData.name.trim() && formData.objectives.length > 0 && formData.income;
+
+  // Adicione uma função para seleção única:
+  const handleIncomeSelect = (id) => {
+    setFormData(prev => ({ ...prev, income: id }));
+  };
+
+
 
   const handleSubmit = () => {
     if (!isFormValid) return;
@@ -59,11 +67,18 @@ const OnboardingScreen = ({ user, onComplete }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Qual é a sua renda média mensal?</label>
             <p className="text-xs text-gray-500 mb-4">Suas respostas ajudam a personalizar sua experiência.</p>
-            {/* Alteração aqui: de space-y-3 para grid para consistência */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {incomeRanges.map(range => (<OptionButton key={range.id} {...range} selected={formData.incomes.includes(range.id)} onToggle={(id) => handleToggle('incomes', id)} />))}
+              {incomeRanges.map(range => (
+                <OptionButton
+                  key={range.id}
+                  {...range}
+                  selected={formData.income === range.id}
+                  onToggle={() => handleIncomeSelect(range.id)}
+                />
+              ))}
             </div>
           </div>
+
           <button onClick={handleSubmit} disabled={!isFormValid || isLoading} className={`w-full py-3 rounded-lg font-medium transition-all ${isFormValid && !isLoading ? 'bg-black text-white hover:bg-gray-800 cursor-pointer' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
             {isLoading ? 'Carregando...' : 'Próximo'}
           </button>
