@@ -1,36 +1,149 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Finanzen - Sistema de Gerenciamento Financeiro
 
-## Getting Started
+Um sistema moderno de gerenciamento financeiro desenvolvido com FastAPI (Backend) e React (Frontend).
 
-First, run the development server:
+## Estrutura do Projeto
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+finanzen/
+├── backend/           # API FastAPI
+└── frontend/         # Aplicação React
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Pré-requisitos
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- Python 3.9+
+- Node.js 18+
+- MySQL 8.0+
+- Git
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Configuração do Ambiente
 
-## Learn More
+### 1. Banco de Dados
 
-To learn more about Next.js, take a look at the following resources:
+1. Instale o MySQL e MySQL Workbench
+2. No MySQL Workbench, execute:
+   ```sql
+   CREATE DATABASE finanzen;
+   CREATE USER 'finanzen_user'@'localhost' IDENTIFIED BY 'sua_senha_segura';
+   GRANT ALL PRIVILEGES ON finanzen.* TO 'finanzen_user'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. Backend (FastAPI)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Configure o ambiente virtual Python:
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # Linux/macOS
+   # ou
+   .\venv\Scripts\activate   # Windows
+   pip install -r requirements.txt
+   ```
 
-## Deploy on Vercel
+2. Configure o arquivo `.env` em `backend/core/.env`:
+   ```env
+   DATABASE_URL="mysql+pymysql://finanzen_user:sua_senha_segura@localhost:3306/finanzen"
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. Inicie o servidor:
+   ```bash
+   uvicorn backend.main:app --reload --app-dir ./
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O backend estará disponível em: http://localhost:8000
+- API Docs (Swagger): http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+### 3. Frontend (React)
+
+1. Instale as dependências:
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+2. Inicie o servidor de desenvolvimento:
+   ```bash
+   npm run dev
+   ```
+
+Frontend disponível em: http://localhost:5173
+
+## API Endpoints
+
+### Autenticação
+
+- `POST /auth/register` - Registro de usuário
+- `POST /auth/verify-email` - Verificação de email
+- `POST /auth/login` - Login de usuário
+
+### Transações
+
+- `GET /transactions` - Lista transações
+- `POST /transactions` - Cria nova transação
+- `GET /transactions/{id}` - Detalhes da transação
+- `PUT /transactions/{id}` - Atualiza transação
+- `DELETE /transactions/{id}` - Remove transação
+
+## Desenvolvimento
+
+### Estrutura do Backend
+
+```
+backend/
+├── controllers/      # Endpoints da API
+├── core/            # Configurações
+├── crud/            # Operações do BD
+├── services/        # Lógica de negócios
+└── tests/           # Testes
+```
+
+### Estrutura do Frontend
+
+```
+frontend/src/
+├── components/      # Componentes React
+├── hooks/          # Custom hooks
+├── layouts/        # Layouts
+├── screens/        # Páginas
+├── services/       # Serviços API
+└── utils/          # Utilitários
+```
+
+## Testes
+
+### Backend
+```bash
+cd backend
+pytest
+```
+
+### Frontend
+```bash
+cd frontend
+npm test
+```
+
+## Segurança
+
+- Implementado HTTPS em produção
+- Rate limiting configurado
+- CORS configurado para domínios específicos
+- Senhas hasheadas com bcrypt
+- Autenticação via JWT
+- Variáveis de ambiente seguras
+- Logs sanitizados
+
+## Contribuição
+
+1. Fork o projeto
+2. Crie uma branch (`git checkout -b feature/NovaFeature`)
+3. Commit suas mudanças (`git commit -m 'Adiciona NovaFeature'`)
+4. Push para a branch (`git push origin feature/NovaFeature`)
+5. Abra um Pull Request
+
+## Licença
+
+Este projeto está sob a licença MIT.

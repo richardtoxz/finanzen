@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from typing import Optional
-from backend import models, schemas
+import models, schemas  
 
 def get_usuario_by_email(db: Session, email: str) -> Optional[models.Usuario]:
     credencial = db.query(models.Credenciais).filter(models.Credenciais.email == email).first()

@@ -3,8 +3,8 @@ import OptionButton from '../components/OptionButton';
 import { useForm } from '../hooks/useForm';
 
 const OnboardingScreen = ({ user, onComplete }) => {
-  // Atualize o estado inicial:
-  const { formData, handleChange, setFormData } = useForm({ name: user?.name || '', objectives: [], income: '' }, {});
+  // Removido 'name' do estado inicial
+  const { formData, handleChange, setFormData } = useForm({ objectives: [], income: '' }, {});
   const [isLoading, setIsLoading] = useState(false);
 
   const objectives = [
@@ -26,8 +26,8 @@ const OnboardingScreen = ({ user, onComplete }) => {
     [field]: prev[field].includes(id) ? prev[field].filter(itemId => itemId !== id) : [...prev[field], id]
   }));
 
-  // Atualize a validação do formulário:
-  const isFormValid = formData.name.trim() && formData.objectives.length > 0 && formData.income;
+  // Atualizada a validação do formulário removendo a verificação do nome
+  const isFormValid = formData.objectives.length > 0 && formData.income;
 
   // Adicione uma função para seleção única:
   const handleIncomeSelect = (id) => {
@@ -50,14 +50,10 @@ const OnboardingScreen = ({ user, onComplete }) => {
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Finanzen</h1>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Agora me conta um pouco sobre você</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Bem-vindo(a), {user?.nomeUsuario}!</h2>
           <p className="text-gray-600">Vamos deixar sua vida financeira mais leve</p>
         </div>
         <div className="space-y-8">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Qual seu nome?</label>
-            <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Digite o seu nome aqui..." className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all" />
-          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Qual seu objetivo com o app?</label>
             <div className="cursor-pointer grid grid-cols-1 sm:grid-cols-2 gap-3">
