@@ -24,12 +24,11 @@ finanzen/
 1. Instale o MySQL e MySQL Workbench
 2. No MySQL Workbench, execute:
    ```sql
-CREATE SCHEMA IF NOT EXISTS finanzen;
-USE finanzen;
-SHOW TABLES;
-SELECT * FROM credenciais;
-SELECT * FROM usuario;
-   ```
+   CREATE SCHEMA IF NOT EXISTS finanzen;
+   USE finanzen;
+   SHOW TABLES;
+   SELECT * FROM credenciais;
+   SELECT * FROM usuario; ```
 
 ### 2. Backend (FastAPI)
 
