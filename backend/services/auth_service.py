@@ -2,9 +2,9 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from typing import Optional
 
-from backend import schemas, models
-from backend.crud import user_crud, verification_crud
-from backend.core.security import generate_verification_code
+import schemas, models
+from crud import user_crud, verification_crud
+from core.security import generate_verification_code
 
 class AuthService:
     def request_registration_and_send_code(
