@@ -45,3 +45,4 @@ __pycache__/
 *.pyc
 backend/venv/
 __init__.py
+.pytest_cache/
