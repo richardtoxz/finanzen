@@ -5,16 +5,14 @@ aptPkgs = [
     "libssl-dev",       
     "cargo",           
     "libmysqlclient-dev",
-    "python3-pip"  # Adiciona o pip explicitamente
+    "python3-pip"
 ]
 pythonVersion = "3.11"
 
 [phases.install]
 cmds = [
-    "python -m pip install --upgrade pip",  # Atualiza o pip
-    "python -m pip install --no-cache-dir -r requirements.txt"
+    "pip3 install --no-cache-dir -r requirements.txt"
 ]
 
 [start]
-cmd = "python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
-
+cmd = "python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT"
