@@ -1,5 +1,4 @@
 [phases.setup]
-
 aptPkgs = [
     "build-essential",  
     "python3-dev",      
@@ -8,4 +7,14 @@ aptPkgs = [
     "libmysqlclient-dev" 
 ]
 pythonVersion = "3.11"
+
+[phases.install]
+cmds = [
+    "python -m venv /opt/venv",
+    ". /opt/venv/bin/activate",
+    "pip install --no-cache-dir -r requirements.txt"
+]
+
+[start]
+cmd = ". /opt/venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port $PORT"
 
