@@ -1,0 +1,11 @@
+[phases.setup]
+
+aptPkgs = [
+    "build-essential",  
+    "python3-dev",      
+    "libssl-dev",       
+    "cargo",           
+    "libmysqlclient-dev" 
+]
+pythonVersion = "3.13"
+
