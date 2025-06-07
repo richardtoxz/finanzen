@@ -10,8 +10,9 @@ pythonVersion = "3.11"
 
 [phases.install]
 cmds = [
-    "python -m venv /opt/venv",
+    "python -m venv --without-pip /opt/venv",
     ". /opt/venv/bin/activate",
+    "curl -sS https://bootstrap.pypa.io/get-pip.py | python",
     "pip install --no-cache-dir -r requirements.txt"
 ]
 
