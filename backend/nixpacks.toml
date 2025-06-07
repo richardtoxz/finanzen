@@ -11,8 +11,9 @@ pythonVersion = "3.11"
 
 [phases.install]
 cmds = [
-    "pip3 install --no-cache-dir -r requirements.txt"
+  "python3 -m venv /opt/venv",
+  "/opt/venv/bin/pip install --no-cache-dir -r requirements.txt"
 ]
 
 [start]
-cmd = "python3 -m uvicorn main:app --host 0.0.0.0 --port $PORT"
+cmd = "/opt/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
