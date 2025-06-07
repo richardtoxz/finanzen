@@ -1,4 +1,4 @@
-const API_URL = 'https://finanzen-production.up.railway.app/';
+const API_URL = 'https://finanzen-production.up.railway.app';
 
 export const api = {
     async register(userData) {
