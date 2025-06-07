@@ -8,6 +8,10 @@
   "scripts": {
     "dev": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build",
-    "lint": "cd frontend && npm run lint"
+    "lint": "cd frontend && npm run lint",
+    "start": "serve -s frontend/dist"
+  },
+  "dependencies": {
+    "serve": "^14.2.4"
   }
 }

@@ -3,8 +3,16 @@ import OptionButton from '../components/OptionButton';
 import { useForm } from '../hooks/useForm';
 
 const OnboardingScreen = ({ user, onComplete }) => {
-  // Removido 'name' do estado inicial
-  const { formData, handleChange, setFormData } = useForm({ objectives: [], income: '' }, {});
+  const { formData, handleChange, errors, validate } = useForm(
+    { 
+      objectives: [], 
+      income: '' 
+    }, 
+    {
+      objectives: (val) => val.length === 0 ? 'Selecione pelo menos um objetivo' : '',
+      income: (val) => !val ? 'Selecione uma faixa de renda' : ''
+    }
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   const objectives = [
@@ -21,23 +29,31 @@ const OnboardingScreen = ({ user, onComplete }) => {
     { id: 'no-answer', label: 'Prefiro não responder' }
   ];
 
-  const handleToggle = (field, id) => setFormData(prev => ({
-    ...prev,
-    [field]: prev[field].includes(id) ? prev[field].filter(itemId => itemId !== id) : [...prev[field], id]
-  }));
-
-  // Atualizada a validação do formulário removendo a verificação do nome
-  const isFormValid = formData.objectives.length > 0 && formData.income;
-
-  // Adicione uma função para seleção única:
-  const handleIncomeSelect = (id) => {
-    setFormData(prev => ({ ...prev, income: id }));
+  const handleToggle = (field, id) => {
+    const updatedObjectives = formData[field].includes(id) 
+      ? formData[field].filter(itemId => itemId !== id) 
+      : [...formData[field], id];
+    
+    handleChange({ 
+      target: { 
+        name: field, 
+        value: updatedObjectives 
+      } 
+    });
   };
 
-
+  const handleIncomeSelect = (id) => {
+    handleChange({ 
+      target: { 
+        name: 'income', 
+        value: id 
+      } 
+    });
+  };
 
   const handleSubmit = () => {
-    if (!isFormValid) return;
+    if (!validate()) return;
+    
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
@@ -57,8 +73,18 @@ const OnboardingScreen = ({ user, onComplete }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Qual seu objetivo com o app?</label>
             <div className="cursor-pointer grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {objectives.map(obj => (<OptionButton key={obj.id} {...obj} selected={formData.objectives.includes(obj.id)} onToggle={(id) => handleToggle('objectives', id)} />))}
+              {objectives.map(obj => (
+                <OptionButton 
+                  key={obj.id} 
+                  {...obj} 
+                  selected={formData.objectives.includes(obj.id)} 
+                  onToggle={(id) => handleToggle('objectives', id)} 
+                />
+              ))}
             </div>
+            {errors.objectives && (
+              <p className="mt-2 text-sm text-red-600">{errors.objectives}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Qual é a sua renda média mensal?</label>
@@ -73,9 +99,16 @@ const OnboardingScreen = ({ user, onComplete }) => {
                 />
               ))}
             </div>
+            {errors.income && (
+              <p className="mt-2 text-sm text-red-600">{errors.income}</p>
+            )}
           </div>
 
-          <button onClick={handleSubmit} disabled={!isFormValid || isLoading} className={`w-full py-3 rounded-lg font-medium transition-all ${isFormValid && !isLoading ? 'bg-black text-white hover:bg-gray-800 cursor-pointer' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>
+          <button 
+            onClick={handleSubmit} 
+            disabled={isLoading} 
+            className={`w-full py-3 rounded-lg font-medium transition-all ${!errors.objectives && !errors.income ? 'bg-black text-white hover:bg-gray-800 cursor-pointer' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+          >
             {isLoading ? 'Carregando...' : 'Próximo'}
           </button>
         </div>
