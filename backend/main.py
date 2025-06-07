@@ -15,13 +15,16 @@ app = FastAPI(
     """
 )
 
-# Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://richardtoxz.github.io/finanzen" 
+     
+    ],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"], 
+    allow_headers=["*"],
 )
 
 app.include_router(auth_controller.router)

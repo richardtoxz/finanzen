@@ -24,11 +24,13 @@ finanzen/
 1. Instale o MySQL e MySQL Workbench
 2. No MySQL Workbench, execute:
    ```sql
-   CREATE SCHEMA IF NOT EXISTS finanzen;
-   USE finanzen;
-   SHOW TABLES;
-   SELECT * FROM credenciais;
-   SELECT * FROM usuario; ```
+
+CREATE SCHEMA IF NOT EXISTS finanzen;
+USE finanzen;
+SHOW TABLES;
+SELECT * FROM credenciais;
+SELECT * FROM usuario;
+   ```
 
 ### 2. Backend (FastAPI)
 
@@ -49,7 +51,7 @@ finanzen/
 
 3. Inicie o servidor:
    ```bash
-   uvicorn backend.main:app --reload --app-dir ./
+   uvicorn main:app --reload --app-dir ./
    ```
 
 O backend estará disponível em: http://localhost:8000

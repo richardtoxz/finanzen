@@ -6,7 +6,7 @@ export const useForm = (initialState, validations) => {
 
   const handleChange = ({ target: { name, value } }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
-    setErrors(prev => ({ ...prev, [name]: '' })); // Clear error on change
+    setErrors(prev => ({ ...prev, [name]: '' })); 
   };
 
   const validate = () => {

@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://finanzen.pythonanywhere.com';
 
 export const api = {
     async register(userData) {
