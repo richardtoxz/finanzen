@@ -24,8 +24,7 @@ const LoginScreen = ({ onLogin, onSwitchToSignup }) => {
         email: formData.email,
         senha: formData.password
       };
-      
-      const response = await api.login(loginData);
+        await api.login(loginData);
       onLogin(loginData);
     } catch (error) {
       console.error('Erro no login:', error);
@@ -41,9 +40,7 @@ const LoginScreen = ({ onLogin, onSwitchToSignup }) => {
     <AuthLayout 
       title="Finanzen" 
       subtitle="Entre na sua conta" 
-      footerText="Não tem uma conta?" 
-      footerAction={onSwitchToSignup} 
-      footerActionText="Cadastre-se"
+      
     >
       {errors.general && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -52,10 +49,6 @@ const LoginScreen = ({ onLogin, onSwitchToSignup }) => {
       )}
       
       <div className="space-y-6">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold">Bem-vindo de volta!</h2>
-          <p className="text-gray-600">Entre para continuar</p>
-        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
