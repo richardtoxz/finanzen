@@ -3,8 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from controllers import auth_controller
 from core.config import settings
+import logging
 
-Base.metadata.create_all(bind=engine)
+logging.basicConfig(
+    level=logging.INFO) 
+logger = logging.getLogger(__name__)    
+
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

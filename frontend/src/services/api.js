@@ -1,24 +1,39 @@
 const API_URL = 'https://finanzen-production.up.railway.app';
 
+const createApiError = (errorData, responseStatus, defaultMessage) => {
+    const customError = new Error(defaultMessage || 'Ocorreu um erro na solicitação à API.');
+    customError.response = {
+        data: errorData,
+        status: responseStatus
+    };
+    return customError;
+};
+
+const sanitizeInput = (input) => {
+    return typeof input === 'string' ? input.trim() : input;
+};
+
 export const api = {
     async register(userData) {
+        const sanitizedData = {
+            nomeUsuario: sanitizeInput(userData.name),
+            email: sanitizeInput(userData.email),
+            senha: sanitizeInput(userData.password),
+            objetivoPreferencias: sanitizeInput(userData.goals),
+            rendaMensalPreferencias: sanitizeInput(userData.income)
+        };
+
         const response = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                nomeUsuario: userData.name,
-                email: userData.email,
-                senha: userData.password,
-                objetivoPreferencias: userData.goals,
-                rendaMensalPreferencias: userData.income
-            }),
+            body: JSON.stringify(sanitizedData),
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Erro ao registrar usuário');
+            const errorData = await response.json();
+            throw createApiError(errorData, response.status, 'Erro ao registrar usuário.');
         }
 
         return response.json();
@@ -31,14 +46,14 @@ export const api = {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                email,
-                codigo_Verificacao: verificationCode
+                email: sanitizeInput(email),
+                codigo_Verificacao: sanitizeInput(verificationCode)
             }),
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Erro ao verificar email');
+            const errorData = await response.json();
+            throw createApiError(errorData, response.status, 'Erro ao verificar e-mail.');
         }
 
         return response.json();
@@ -46,11 +61,9 @@ export const api = {
 
     async login(credentials) {
         const loginData = {
-            email: credentials.email,
-            senha: credentials.senha || credentials.password
+            email: sanitizeInput(credentials.email),
+            senha: sanitizeInput(credentials.senha || credentials.password)
         };
-
-        console.log('Enviando requisição de login:', loginData);
         
         const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
@@ -61,13 +74,11 @@ export const api = {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            console.error('Erro na resposta:', error);
-            throw new Error(error.detail?.join(', ') || error.detail || 'Erro ao fazer login');
+            const errorData = await response.json();
+            throw createApiError(errorData, response.status, 'Falha na tentativa de login.');
         }
 
-        const data = await response.json();
-        console.log('Resposta do login:', data);
-        return data;
+        return response.json();
     }
 };
+
