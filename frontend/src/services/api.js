@@ -33,6 +33,7 @@ export const api = {
 
         if (!response.ok) {
             const errorData = await response.json();
+            console.error('Erro na resposta (register):', errorData);
             throw createApiError(errorData, response.status, 'Erro ao registrar usuário.');
         }
 
@@ -53,6 +54,7 @@ export const api = {
 
         if (!response.ok) {
             const errorData = await response.json();
+            console.error('Erro na resposta (verifyEmail):', errorData);
             throw createApiError(errorData, response.status, 'Erro ao verificar e-mail.');
         }
 
@@ -75,6 +77,7 @@ export const api = {
 
         if (!response.ok) {
             const errorData = await response.json();
+            console.error('Erro na resposta (login):', errorData); 
             throw createApiError(errorData, response.status, 'Falha na tentativa de login.');
         }
 

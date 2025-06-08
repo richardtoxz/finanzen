@@ -3,13 +3,20 @@ import Input from '../components/Input';
 import AuthLayout from '../layouts/AuthLayout';
 import { useForm } from '../hooks/useForm';
 import { validateEmail } from '../utils/validation';
-import { api } from '../services/api';
 
 const LoginScreen = ({ onLogin, onSwitchToSignup }) => {
-  const { formData, handleChange, errors, validate } = useForm({ email: '', password: '' }, {
-    email: (val) => !val.trim() ? 'Email é obrigatório' : !validateEmail(val) ? 'Email inválido' : '',
-    password: (val) => !val ? 'Senha é obrigatória' : ''
-  });
+  const { formData, handleChange, errors, validate } = useForm(
+    { email: '', password: '' },
+    {
+      email: (val) => !val.trim()
+        ? 'Email é obrigatório'
+        : !validateEmail(val)
+        ? 'Email inválido'
+        : '',
+      password: (val) => !val ? 'Senha é obrigatória' : ''
+    }
+  );
+
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -17,44 +24,33 @@ const LoginScreen = ({ onLogin, onSwitchToSignup }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-    
+
     setIsLoading(true);
     setLoginError('');
-    
+
     try {
-      const loginData = {
-        email: formData.email,
-        senha: formData.password
-      };
-      const userData = await api.login(loginData); 
-      onLogin(userData);
+      await onLogin(formData);
     } catch (error) {
-      if (error.response && (error.response.status === 401 || error.response.status === 400 || error.response.status === 404)) {
-        setLoginError('Email ou senha inválidos.');
-      } else {
-        setLoginError(error.message || 'Ocorreu um erro ao tentar fazer login.');
-      }
+      setLoginError(error.message || 'Erro ao tentar fazer login.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <AuthLayout 
-      title="Finanzen" 
-      subtitle="Entre na sua conta" 
-    >
+    <AuthLayout title="Finanzen" subtitle="Entre na sua conta">
       {loginError && (
         <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg">
           <p className="text-red-700 text-sm text-center">{loginError}</p>
         </div>
       )}
-            {errors.general && !loginError && (
+
+      {errors.general && !loginError && (
         <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg">
           <p className="text-red-700 text-sm text-center">{errors.general}</p>
         </div>
       )}
-      
+
       <div className="space-y-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -63,7 +59,7 @@ const LoginScreen = ({ onLogin, onSwitchToSignup }) => {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            error={errors.email} 
+            error={errors.email}
             required
           />
 
