@@ -9,18 +9,14 @@ if project_root not in sys.path:
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 import pytest
 
+# Import after setting up the path
 from backend.main import app
-from backend.database import Base, get_db
+from backend.database import get_db, Base
 
 SQLALCHEMY_DATABASE_URL_TEST = "sqlite:///:memory:"
-engine_test = create_engine(
-    SQLALCHEMY_DATABASE_URL_TEST,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+engine_test = create_engine(SQLALCHEMY_DATABASE_URL_TEST, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine_test)
 
 def override_get_db():
@@ -33,28 +29,25 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture(scope="session", autouse=True)
-def create_test_tables_session_scoped():
+def setup_test_db():
+    # Import models to register them
+    import backend.models
     Base.metadata.create_all(bind=engine_test)
     yield
-    # Base.metadata.drop_all(bind=engine_test) # Opcional, BD em memória é descartado
+    Base.metadata.drop_all(bind=engine_test)
 
 @pytest.fixture(scope="function")
-def db_session(create_test_tables_session_scoped):
-    connection = engine_test.connect()
-    transaction = connection.begin()
-    session = TestingSessionLocal(bind=connection)
-
+def db_session():
+    session = TestingSessionLocal()
     yield session
-
     session.close()
-    transaction.rollback()
-    connection.close()
+    
+    # Clear all data after each test
     for table in reversed(Base.metadata.sorted_tables):
-        with engine_test.connect() as conn:
-            conn.execute(table.delete())
-            conn.commit()
+        session.execute(table.delete())
+    session.commit()
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")  
 def client():
     with TestClient(app) as c:
         yield c

@@ -1,7 +1,17 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
+from enum import Enum
+from decimal import Decimal
 import re
+
+class TipoCategoriaEnum(str, Enum):
+    receita = "receita"
+    despesa = "despesa"
+
+class TipoMovimentacaoEnum(str, Enum):
+    receita = "receita"
+    despesa = "despesa"
 
 class UserRegistrationSchema(BaseModel):
     nomeUsuario: str = Field(..., min_length=2, max_length=150)
@@ -55,3 +65,52 @@ class UserLoginSchema(BaseModel):
 class LoginSuccessResponseSchema(BaseModel):
     message: str
     user: UserResponseSchema
+
+class CategoriaCreateSchema(BaseModel):
+    nome: str = Field(..., min_length=1, max_length=100)
+    tipo: TipoCategoriaEnum
+
+class CategoriaUpdateSchema(BaseModel):
+    nome: Optional[str] = Field(None, min_length=1, max_length=100)
+    tipo: Optional[TipoCategoriaEnum] = None
+
+class CategoriaResponseSchema(BaseModel):
+    idCategoria: int
+    nome: str
+    tipo: TipoCategoriaEnum
+    usuario_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+class MovimentacaoCreateSchema(BaseModel):
+    tipo: TipoMovimentacaoEnum
+    valor: Decimal = Field(..., gt=0, decimal_places=2)
+    descricao: Optional[str] = Field(None, max_length=500)
+    data_movimentacao: date
+    categoria_id: int = Field(..., gt=0)
+
+class MovimentacaoUpdateSchema(BaseModel):
+    tipo: Optional[TipoMovimentacaoEnum] = None
+    valor: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
+    descricao: Optional[str] = Field(None, max_length=500)
+    data_movimentacao: Optional[date] = None
+    categoria_id: Optional[int] = Field(None, gt=0)
+
+class CategoriaSimpleResponseSchema(BaseModel):
+    idCategoria: int
+    nome: str
+    tipo: TipoCategoriaEnum
+
+    model_config = ConfigDict(from_attributes=True)
+
+class MovimentacaoResponseSchema(BaseModel):
+    idMovimentacao: int
+    tipo: TipoMovimentacaoEnum
+    valor: Decimal
+    descricao: Optional[str]
+    data_movimentacao: date
+    usuario_id: int
+    categoria_id: int
+    categoria: CategoriaSimpleResponseSchema
+
+    model_config = ConfigDict(from_attributes=True)

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
-from controllers import auth_controller
+from controllers import auth_controller, categoria_controller, movimentacao_controller
 from core.config import settings
 import logging
 
@@ -29,6 +29,8 @@ app.add_middleware(
 )
 
 app.include_router(auth_controller.router)
+app.include_router(categoria_controller.router)
+app.include_router(movimentacao_controller.router)
 
 @app.get("/", tags=["Root"])
 async def read_root():

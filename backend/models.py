@@ -1,7 +1,16 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, TIMESTAMP, func, Text
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, TIMESTAMP, func, Text, Enum, DECIMAL, Date
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime, timedelta
+import enum
+
+class TipoCategoria(enum.Enum):
+    receita = "receita"
+    despesa = "despesa"
+
+class TipoMovimentacao(enum.Enum):
+    receita = "receita"
+    despesa = "despesa"
 
 class Usuario(Base):
     __tablename__ = "usuario"
@@ -11,6 +20,8 @@ class Usuario(Base):
 
     credenciais = relationship("Credenciais", back_populates="usuario", uselist=False, cascade="all, delete-orphan")
     preferencias = relationship("PreferenciasUsuario", back_populates="usuario", uselist=False, cascade="all, delete-orphan")
+    categorias = relationship("CategoriaMov", back_populates="usuario", cascade="all, delete-orphan")
+    movimentacoes = relationship("Movimentacao", back_populates="usuario", cascade="all, delete-orphan")
 
 class Credenciais(Base):
     __tablename__ = "credenciais"
@@ -41,3 +52,26 @@ class VerificacoesEmail(Base):
         super().__init__(**kwargs)
         if not self.expiracao_emVerificacao:
             self.expiracao_emVerificacao = datetime.utcnow() + timedelta(minutes=15)
+
+class CategoriaMov(Base):
+    __tablename__ = "categoria_mov"
+    idCategoria = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    nome = Column(String(100), nullable=False)
+    tipo = Column(Enum(TipoCategoria), nullable=False)
+    usuario_id = Column(Integer, ForeignKey("usuario.idUsuario"), nullable=False)
+    
+    usuario = relationship("Usuario", back_populates="categorias")
+    movimentacoes = relationship("Movimentacao", back_populates="categoria", cascade="all, delete-orphan")
+
+class Movimentacao(Base):
+    __tablename__ = "movimentacao"
+    idMovimentacao = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    tipo = Column(Enum(TipoMovimentacao), nullable=False)
+    valor = Column(DECIMAL(10, 2), nullable=False)
+    descricao = Column(Text, nullable=True)
+    data_movimentacao = Column(Date, nullable=False)
+    usuario_id = Column(Integer, ForeignKey("usuario.idUsuario"), nullable=False)
+    categoria_id = Column(Integer, ForeignKey("categoria_mov.idCategoria"), nullable=False)
+    
+    usuario = relationship("Usuario", back_populates="movimentacoes")
+    categoria = relationship("CategoriaMov", back_populates="movimentacoes")
