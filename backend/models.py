@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, TIMESTAMP, func, Text
 from sqlalchemy.orm import relationship
-from backend.database import Base
+from database import Base
 from datetime import datetime, timedelta
 
 class Usuario(Base):

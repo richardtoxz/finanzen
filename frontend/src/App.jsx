@@ -1,62 +1,54 @@
-import { useState } from 'react';
-import LoginScreen from './screens/LoginScreen';
-import SignupScreen from './screens/SignupScreen';
-import OnboardingScreen from './screens/OnboardingScreen';
-import FinanceApp from './screens/FinanceApp';
+import {useState} from 'react'
+import LoginScreen from './screens/LoginScreen'
+import SignupScreen from './screens/SignupScreen'
+import OnboardingScreen from './screens/OnboardingScreen'
+import FinanceApp from './screens/FinanceApp'
+import VerificationScreen from './screens/VerificationScreen'
+import {api} from './services/api'
 
-export default function App() {
-  const [screen, setScreen] = useState('login'); // Default to 'login'
-  const [user, setUser] = useState(null);
+export default function App(){
+  const [screen,setScreen]=useState('login'),
+        [user,setUser]=useState(null),
+        [email,setEmail]=useState(''),
+        [pending,setPending]=useState(false)
 
-  const handlers = {
-    login: userData => {
-      setUser(userData);
-      // Simple check: if user has a name, assume onboarding was done.
-      // In a real app, this would be a flag from the backend or more robust check.
-      if (TEST_CREDENTIALS.find(cred => cred.email === userData.email && cred.name === userData.name)) {
-         setScreen('app');
-      } else {
-         setScreen('onboarding'); // Should ideally not happen if login implies full user data
-      }
-    },
-    signup: userData => { // userData here usually just contains email from signup form
-      setUser(userData);
-      setScreen('onboarding');
-    },
-    onboardingComplete: updatedUserData => {
-      setUser(updatedUserData);
-      setScreen('app');
-    },
-    logout: () => {
-      setUser(null);
-      setScreen('login');
-    },
-    switchToLogin: () => setScreen('login'),
-    switchToSignup: () => setScreen('signup')
-  };
+  const handleLogin=async({email,senha,password})=>{
+    try{
+      const res=await api.login({email,senha:senha||password})
+      setUser(res.user)
+      setScreen('app')
+    }catch(e){alert(e.message||'Erro ao fazer login')}
+  }
 
-  // This is just for the login check logic, ideally user data structure would be more consistent
-  const TEST_CREDENTIALS = [
-    { name: 'Enzo Silva', email: 'enzo@teste.com' },
-    { name: 'Maria Santos', email: 'maria@demo.com' },
-    { name: 'João Costa', email: 'joao@exemplo.com' }
-  ];
+  const handleSignup=async data=>{
+    try{
+      const res=await api.register(data)
+      setEmail(res.email)
+      setPending(true)
+      alert(`Código (teste): ${res.verification_code_for_testing}`)
+    }catch(e){alert(e.message)}
+  }
 
+  const handleVerify=async code=>{
+    try{
+      const res=await api.verifyEmail(email,code)
+      setUser(res)
+      setPending(false)
+      setScreen('onboarding')
+    }catch(e){alert(e.message)}
+  }
 
-  const renderScreen = () => {
-    switch (screen) {
-      case 'login':
-        return <LoginScreen onLogin={handlers.login} onSwitchToSignup={handlers.switchToSignup} />;
-      case 'signup':
-        return <SignupScreen onSignup={handlers.signup} onSwitchToLogin={handlers.switchToLogin} />;
-      case 'onboarding':
-        return user ? <OnboardingScreen user={user} onComplete={handlers.onboardingComplete} /> : <LoginScreen onLogin={handlers.login} onSwitchToSignup={handlers.switchToSignup} />; // Fallback to login if no user
-      case 'app':
-        return user ? <FinanceApp user={user} onLogout={handlers.logout} /> : <LoginScreen onLogin={handlers.login} onSwitchToSignup={handlers.switchToSignup} />; // Fallback to login if no user
-      default:
-        return <LoginScreen onLogin={handlers.login} onSwitchToSignup={handlers.switchToSignup} />;
-    }
-  };
+  const handleOnboard=info=>{setUser(u=>({...u,...info}));setScreen('app')}
+  const handleLogout=()=>{setUser(null);setScreen('login')}
 
-  return renderScreen();
+  const screens={
+    login:<LoginScreen onLogin={handleLogin} onSwitchToSignup={()=>setScreen('signup')} />,
+    signup:pending
+      ?<VerificationScreen onVerify={handleVerify} email={email}/>
+      :<SignupScreen onSignup={handleSignup} onSwitchToLogin={()=>setScreen('login')} />,    
+    onboarding:user && <OnboardingScreen user={user} onComplete={handleOnboard}/>,
+    app:user && <FinanceApp user={user} onLogout={handleLogout}/>
+  }
+
+  return screens[screen]||screens.login
 }

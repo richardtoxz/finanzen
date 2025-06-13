@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime, timedelta, timezone
-from backend.models import VerificacoesEmail
+from models import VerificacoesEmail
 
 def create_verification_code(db: Session, email: str, code: str, expires_in_minutes: int = 15) -> VerificacoesEmail:
     db.query(VerificacoesEmail).filter(

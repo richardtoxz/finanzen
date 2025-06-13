@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from backend.database import engine, Base
-from backend.controllers import auth_controller
-from backend.core.config import settings
+from fastapi.middleware.cors import CORSMiddleware
+from database import engine, Base
+from controllers import auth_controller
+from core.config import settings
 
 Base.metadata.create_all(bind=engine)
 
@@ -12,6 +13,15 @@ app = FastAPI(
     API para fins acadêmicos (Projeto Finanzen).
     A api usa estrutura MVC, lógica de negócios baseada na documentação e testes.
     """
+)
+
+# Configurar CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"], 
 )
 
 app.include_router(auth_controller.router)
