@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -7,39 +8,22 @@ from database import get_db
 from services.categoria_service import categoria_service_instance, CategoriaService
 
 router = APIRouter(prefix="/categorias", tags=["Categorias"])
+security = HTTPBearer()
 
-def get_current_user_id(authorization: str = Header(...), db: Session = Depends(get_db)) -> int:
+def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> int:
     """
-    Função auxiliar para extrair o user_id do cabeçalho Authorization.
+    Função auxiliar para extrair o user_id do token Bearer.
     O frontend deve enviar o ID do usuário no formato: Bearer {user_id}
     Em produção, isso seria um JWT token.
     """
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token de autorização inválido."
-        )
-    
     try:
-        user_id_str = authorization.replace("Bearer ", "").strip()
-        user_id = int(user_id_str)
+        user_id = int(credentials.credentials)
+        return user_id
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="ID de usuário inválido."
-        )    
-    user = db.query(models.Usuario).filter(
-        models.Usuario.idUsuario == user_id,
-        models.Usuario.is_verified == True
-    ).first()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuário não encontrado ou não verificado."
+            detail="Token de autorização deve ser um ID de usuário válido"
         )
-    
-    return user.idUsuario
 
 @router.post("/", response_model=schemas.CategoriaResponseSchema, status_code=status.HTTP_201_CREATED)
 def create_categoria_endpoint(

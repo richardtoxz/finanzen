@@ -88,6 +88,7 @@ class MovimentacaoCreateSchema(BaseModel):
     descricao: Optional[str] = Field(None, max_length=500)
     data_movimentacao: date
     categoria_id: int = Field(..., gt=0)
+    meta_id: Optional[int] = Field(None, gt=0)
 
 class MovimentacaoUpdateSchema(BaseModel):
     tipo: Optional[TipoMovimentacaoEnum] = None
@@ -95,6 +96,7 @@ class MovimentacaoUpdateSchema(BaseModel):
     descricao: Optional[str] = Field(None, max_length=500)
     data_movimentacao: Optional[date] = None
     categoria_id: Optional[int] = Field(None, gt=0)
+    meta_id: Optional[int] = Field(None, gt=0)
 
 class CategoriaSimpleResponseSchema(BaseModel):
     idCategoria: int
@@ -112,5 +114,32 @@ class MovimentacaoResponseSchema(BaseModel):
     usuario_id: int
     categoria_id: int
     categoria: CategoriaSimpleResponseSchema
+    meta_id: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+# Schemas para Metas Financeiras
+class MetaCreateSchema(BaseModel):
+    nome: str = Field(..., min_length=1, max_length=150)
+    valor_objetivo: Decimal = Field(..., gt=0, decimal_places=2)
+    descricao: Optional[str] = Field(None, max_length=500)
+    data_limite: Optional[date] = None
+
+class MetaUpdateSchema(BaseModel):
+    nome: Optional[str] = Field(None, min_length=1, max_length=150)
+    valor_objetivo: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
+    descricao: Optional[str] = Field(None, max_length=500)
+    data_limite: Optional[date] = None
+
+class MetaResponseSchema(BaseModel):
+    idMeta: int
+    nome: str
+    descricao: Optional[str]
+    valor_objetivo: Decimal
+    valor_inicial: Decimal
+    data_limite: Optional[date]
+    usuario_id: int
+    valor_atual: Decimal
+    progresso_percentual: float
 
     model_config = ConfigDict(from_attributes=True)

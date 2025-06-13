@@ -15,6 +15,7 @@ def create_movimentacao(
         descricao=movimentacao_data.descricao,
         data_movimentacao=movimentacao_data.data_movimentacao,
         categoria_id=movimentacao_data.categoria_id,
+        meta_id=movimentacao_data.meta_id,
         usuario_id=usuario_id
     )
     db.add(db_movimentacao)

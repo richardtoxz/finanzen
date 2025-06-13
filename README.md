@@ -1,143 +1,128 @@
-# Finanzen - Sistema de Gerenciamento Financeiro
+### README.md Reformulado
 
-Um sistema moderno de gerenciamento financeiro desenvolvido com FastAPI (Backend) e React (Frontend).
+# Finanzen - Backend
 
-## Estrutura do Projeto
+Este é o guia de configuração e execução para o backend do projeto Finanzen, desenvolvido em Python com o framework FastAPI.
 
-```
-finanzen/
-├── backend/           # API FastAPI
-└── frontend/         # Aplicação React
-```
+## 1\. Pré-requisitos
 
-## Pré-requisitos
+Antes de começar, garanta que você tenha os seguintes programas instalados:
 
-- Python 3.9+
-- Node.js 18+
-- MySQL 8.0+
-- Git
+  * **Python 3.9+**: Você pode baixar em [python.org](https://www.python.org/). Durante a instalação no Windows, marque a opção "Add Python to PATH".
+  * **MySQL Server e MySQL Workbench**: Recomendamos o pacote de instalação oficial do site do MySQL.
+  * **Git**: Para controle de versão do código.
 
-## Configuração do Ambiente
+## 2\. Configuração do Banco de Dados (MySQL)
 
-### 1. Banco de Dados
+1.  Abra o **MySQL Workbench** e conecte-se ao seu servidor de banco de dados local.
 
-1. Instale o MySQL e MySQL Workbench
-2. No MySQL Workbench, execute:
-   ```sql
+2.  Execute os seguintes comandos SQL para criar o banco de dados e um usuário específico para o projeto:
 
-CREATE SCHEMA IF NOT EXISTS finanzen;
-USE finanzen;
-SHOW TABLES;
-SELECT * FROM credenciais;
-SELECT * FROM usuario;
-   ```
+    ```sql
+    -- Cria o banco de dados se ele não existir
+    CREATE SCHEMA IF NOT EXISTS finanzen;
+    ```
 
-### 2. Backend (FastAPI)
+## 3\. Configuração e Execução do Backend
 
-1. Configure o ambiente virtual Python:
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # Linux/macOS
-   # ou
-   .\venv\Scripts\activate   # Windows
-   pip install -r requirements.txt
-   ```
+Siga estes passos dentro da pasta raiz do projeto (`finanzen/`).
 
-2. Configure o arquivo `.env` em `backend/core/.env`:
-   ```env
-   DATABASE_URL="mysql+pymysql://finanzen_user:sua_senha_segura@localhost:3306/finanzen"
-   ```
+#### Passo 1: Clone o Repositório
 
-3. Inicie o servidor:
-   ```bash
-   uvicorn main:app --reload --app-dir ./
-   ```
+Se ainda não tiver o projeto, clone-o do repositório.
 
-O backend estará disponível em: http://localhost:8000
-- API Docs (Swagger): http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-### 3. Frontend (React)
-
-1. Instale as dependências:
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-2. Inicie o servidor de desenvolvimento:
-   ```bash
-   npm run dev
-   ```
-
-Frontend disponível em: http://localhost:5173
-
-## API Endpoints
-
-### Autenticação
-
-- `POST /auth/register` - Registro de usuário
-- `POST /auth/verify-email` - Verificação de email
-- `POST /auth/login` - Login de usuário
-
-### Transações
-
-- `GET /transactions` - Lista transações
-- `POST /transactions` - Cria nova transação
-- `GET /transactions/{id}` - Detalhes da transação
-- `PUT /transactions/{id}` - Atualiza transação
-- `DELETE /transactions/{id}` - Remove transação
-
-## Desenvolvimento
-
-### Estrutura do Backend
-
-```
-backend/
-├── controllers/      # Endpoints da API
-├── core/            # Configurações
-├── crud/            # Operações do BD
-├── services/        # Lógica de negócios
-└── tests/           # Testes
+```bash
+git clone <URL_DO_SEU_REPOSITORIO>
+cd finanzen
 ```
 
-### Estrutura do Frontend
+#### Passo 2: Navegue até a Pasta do Backend
 
-```
-frontend/src/
-├── components/      # Componentes React
-├── hooks/          # Custom hooks
-├── layouts/        # Layouts
-├── screens/        # Páginas
-├── services/       # Serviços API
-└── utils/          # Utilitários
-```
-
-## Testes
-
-### Backend
 ```bash
 cd backend
-pytest
 ```
 
-### Frontend
+#### Passo 3: Crie e Ative o Ambiente Virtual
+
+Este passo isola as dependências do projeto. Execute estes comandos uma vez para configurar.
+
 ```bash
-cd frontend
-npm test
+# Cria uma pasta 'venv' com uma instalação isolada do Python
+python -m venv venv
+
+# Ativa o ambiente virtual (você deve fazer isso toda vez que for trabalhar no projeto)
+.\venv\Scripts\activate
 ```
 
-## Segurança
+*Após ativar, seu terminal deve mostrar `(venv)` no início da linha.*
 
-- Implementado HTTPS em produção
-- Rate limiting configurado
-- CORS configurado para domínios específicos
-- Senhas hasheadas com bcrypt
-- Autenticação via JWT
-- Variáveis de ambiente seguras
-- Logs sanitizados
+#### Passo 4: Instale as Dependências
 
-## Licença
+Com o ambiente virtual ativo, instale todas as bibliotecas necessárias.
 
-Este projeto está sob a licença MIT.
+```bash
+pip install -r requirements.txt
+```
+
+#### Passo 5: Configure as Variáveis de Ambiente
+
+1.  Na pasta `backend/core`, crie um novo arquivo de texto e salve-o com o nome de `.env` (exatamente ".env", sem nome antes do ponto).
+
+2.  Abra o arquivo `.env` e cole o conteúdo abaixo, **substituindo pela senha que você definiu no MySQL**:
+
+    ```env
+    # URL de conexão para o banco de dados MySQL
+    DATABASE_URL="mysql+pymysql://finanzen_user:uma_senha_forte_aqui@localhost:3306/finanzen"
+
+    ```
+
+#### Passo 6: Crie as Tabelas no Banco de Dados
+
+O SQLAlchemy pode criar as tabelas para você. Com o ambiente virtual ativo, execute:
+
+```bash
+# Este comando usa o models.py para criar as tabelas no seu MySQL
+python -c "import models; from database import Base, engine; Base.metadata.create_all(bind=engine)"
+```
+
+*Se você já criou as tabelas manualmente com o script SQL, pode pular este passo.*
+
+#### Passo 7: Inicie o Servidor da API
+
+Agora, vamos iniciar o servidor de desenvolvimento.
+
+```bash
+uvicorn main:app --reload
+```
+
+*A opção `--reload` faz o servidor reiniciar automaticamente quando você salva alterações no código.*
+
+Se tudo deu certo, você verá uma mensagem indicando que o servidor está rodando em `http://127.0.0.1:8000`.
+
+## 4\. Verificando a API
+
+Com o servidor rodando, abra seu navegador e acesse a documentação interativa da API para testar os endpoints:
+
+  * **Documentação Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+  * **Documentação ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+No Swagger, você pode usar o botão "Authorize" e inserir o ID de um usuário (ex: `1`) para testar os endpoints protegidos.
+
+## 5\. Executando os Testes Automatizados
+
+Para garantir que tudo está funcionando como esperado, você pode rodar a suíte de testes automatizados. Estes testes usam um banco de dados em memória e **não** afetam seu banco de dados MySQL.
+
+1.  Abra um **novo terminal** na pasta raiz (`finanzen/`).
+2.  Navegue até a pasta `backend` e ative o ambiente virtual:
+    ```bash
+    cd backend
+    .\venv\Scripts\activate
+    ```
+3.  Execute o Pytest:
+    ```bash
+    pytest
+    ```
+
+Isso executará todos os testes nos arquivos `tests/` e mostrará um relatório dos resultados.
+
+-----

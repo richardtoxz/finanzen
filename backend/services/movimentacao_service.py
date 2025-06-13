@@ -5,6 +5,7 @@ from datetime import date
 
 import schemas, models
 from crud import movimentacao_crud
+from crud.meta_crud import get_meta_by_id
 
 class MovimentacaoService:
     def create_movimentacao(
@@ -20,6 +21,14 @@ class MovimentacaoService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Categoria não encontrada ou não pertence ao usuário."
             )
+        
+        # Validar se a meta pertence ao usuário (se fornecida)
+        if movimentacao_data.meta_id is not None:
+            if not get_meta_by_id(db, movimentacao_data.meta_id, usuario_id):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Meta não encontrada ou não pertence ao usuário."
+                )
         
         return movimentacao_crud.create_movimentacao(db, movimentacao_data, usuario_id)
     
@@ -65,6 +74,14 @@ class MovimentacaoService:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Categoria não encontrada ou não pertence ao usuário."
+                )
+        
+        # Validar se a meta pertence ao usuário (se fornecida)
+        if movimentacao_data.meta_id is not None:
+            if not get_meta_by_id(db, movimentacao_data.meta_id, usuario_id):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Meta não encontrada ou não pertence ao usuário."
                 )
         
         movimentacao = movimentacao_crud.update_movimentacao(
