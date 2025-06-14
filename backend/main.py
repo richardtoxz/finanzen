@@ -2,11 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
 from database import engine, Base
-from controllers import auth_controller, categoria_controller, movimentacao_controller, meta_controller
+from controllers import auth_controller, categoria_controller, movimentacao_controller, meta_controller, orcamentos_controller
 from core.config import settings
 import logging
-
-from finanzen.backend.controllers import orcamentos_controller
 
 logging.basicConfig(
     level=logging.INFO) 
