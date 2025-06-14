@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, X, PlusSquare, MinusSquare, Target, FileText, Layers, Settings, LogOut, Home, BarChart3, User, Car, Coffee, Plane, ShoppingBag, Shield, Edit2, Trash2, Plus } from 'lucide-react';
+import { api } from '../services/api';
 import SidebarItem from '../components/SidebarItem';
 import SummaryCard from '../components/SummaryCard';
 import TransactionCard from '../components/TransactionCard';
 import GoalCard from '../components/GoalCard';
 import ReportsScreen from './ReportsScreen';
-import { formatCurrency, parseCurrency } from '../utils/formatCurrency';
+import { formatCurrency } from '../utils/formatCurrency';
 import GoalsScreen from './GoalsScreen';
 import BudgetsScreen from './BudgetsScreen';
 
@@ -62,71 +63,172 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, setTransactionType, setShowModal
   </div>
 );
 
-const OverviewContent = ({ user, currentMonth, setCurrentMonth, setShowModal, categories }) => (
-  <div className="flex-1 flex flex-col overflow-hidden">
-    <header className="border-b border-gray-200 p-4 flex flex-col lg:flex-row justify-between items-center">
-      <div className="flex space-x-2 lg:space-x-4 overflow-x-auto w-full lg:w-auto py-2 scrollbar-hide">
-        {['Mês atual', 'Mês anterior', 'Ano'].map(month => (
-          <button key={month} className={`px-3 lg:px-4 py-2 font-medium text-sm whitespace-nowrap ${currentMonth === month ? 'border-b-2 border-black' : 'text-gray-500 hover:border-b-2 hover:border-gray-300'}`} onClick={() => setCurrentMonth(month)}>{month}</button>
-        ))}
+const OverviewContent = ({ user, currentMonth, setCurrentMonth, setShowModal, categories, transactions, metas, loading }) => {
+  const getCurrentMonthName = () => {
+    const now = new Date();
+    const monthNames = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+    return monthNames[now.getMonth()];
+  };
+
+  const calculateSummary = () => {
+    if (!transactions || transactions.length === 0) {
+      return {
+        saldo: 'R$ 0,00',
+        receitas: 'R$ 0,00',
+        despesas: 'R$ 0,00'
+      };
+    }
+    
+    const receitas = transactions.filter(t => t.type === 'Receita').reduce((sum, t) => sum + t.valor, 0);
+    const despesas = transactions.filter(t => t.type === 'Despesa').reduce((sum, t) => sum + t.valor, 0);
+    const saldo = receitas - despesas;
+    
+    return {
+      saldo: `R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      receitas: `R$ ${receitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      despesas: `R$ ${despesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+    };  };
+
+  const summary = calculateSummary();
+  
+  const recentTransactions = transactions
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 4);
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando dados...</p>
+        </div>
       </div>
-      <button className={`${primaryBtnClasses} w-full lg:w-auto mt-2 lg:mt-0 text-sm`} onClick={() => setShowModal(true)}>
-        Nova Transação
-      </button>
-    </header>
-    <main className="p-4 lg:p-6 flex-1 overflow-y-auto">
-      <h1 className="text-xl lg:text-2xl font-bold">Olá, {user?.name}! 👋 Pronto pra cuidar da sua grana?</h1>
-      
-      <section className="mt-6 lg:mt-8">
-        <h2 className="text-lg lg:text-xl font-bold">Seu resumo de Abril</h2>
-        <p className="text-sm text-gray-500 mt-1">Veja como andam suas finanças nesse mês</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 mt-4">
-          <SummaryCard title="Saldo Atual" value="R$ 5.200,00" />
-          <SummaryCard title="Total de receitas" value="R$ 8.000,00" />
-          <SummaryCard title="Total de despesas" value="R$ 2.800,00" />
-        </div>
-      </section>
+    );
+  }
 
-      <section className="mt-6 lg:mt-8">
-        <h2 className="text-lg lg:text-xl font-bold">Últimas movimentações</h2>
-        <p className="text-sm text-gray-500 mt-1">Visualize suas transações mais recentes</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-          <TransactionCard icon={<Coffee size={20} />} category="Alimentação" value="-R$ 45,00" date="10/04/2024" />
-          <TransactionCard icon={<Car size={20} />} category="Transporte" value="-R$ 120,00" date="08/04/2024" />
-          <TransactionCard icon={<User size={20} />} category="Lazer" value="-R$ 50,00" date="07/04/2024" />
-          <TransactionCard icon={<User size={20} />} category="Lazer" value="-R$ 120,00" date="04/04/2024" />
-        </div>
-      </section>
-
-      <section className="mt-6 lg:mt-8">
-        <h2 className="text-lg lg:text-xl font-bold">Suas metas financeiras</h2>
-        <p className="text-sm text-gray-500 mt-1">Acompanhe o progresso</p>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <GoalCard icon={<Plane size={20} />} title="Viajar" progress={60} value="R$ 3.000 / R$ 5.000" />
-            <GoalCard icon={<Shield size={20} />} title="Reserva de emergencia" progress={40} value="R$ 2.000 / R$ 5.000" />
-            <GoalCard icon={<ShoppingBag size={20} />} title="Compras" progress={50} value="R$ 1.000 / R$ 2.000" />
-            <GoalCard icon={<Plane size={20} />} title="Curso Novo" progress={30} value="R$ 700 / R$ 2.300" label="Novo!" />
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <header className="border-b border-gray-200 p-4 flex flex-col lg:flex-row justify-between items-center">
+        <div className="flex space-x-2 lg:space-x-4 overflow-x-auto w-full lg:w-auto py-2 scrollbar-hide">
+          {['Mês atual', 'Mês anterior', 'Ano'].map(month => (
+            <button key={month} className={`px-3 lg:px-4 py-2 font-medium text-sm whitespace-nowrap ${currentMonth === month ? 'border-b-2 border-black' : 'text-gray-500 hover:border-b-2 hover:border-gray-300'}`} onClick={() => setCurrentMonth(month)}>{month}</button>
+          ))}
+        </div>        <button className={`${primaryBtnClasses} w-full lg:w-auto mt-2 lg:mt-0 text-sm`} onClick={() => setShowModal(true)}>
+          Nova Transação
+        </button>
+      </header>
+      <main className="p-4 lg:p-6 flex-1 overflow-y-auto">
+        <h1 className="text-xl lg:text-2xl font-bold">Olá, {user?.nomeUsuario || user?.name}! 👋 Pronto pra cuidar da sua grana?</h1>
+          <section className="mt-6 lg:mt-8">
+          <h2 className="text-lg lg:text-xl font-bold">Seu resumo de {getCurrentMonthName()}</h2>
+          <p className="text-sm text-gray-500 mt-1">Veja como andam suas finanças nesse mês</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 mt-4">
+            <SummaryCard title="Saldo Atual" value={summary.saldo} />
+            <SummaryCard title="Total de receitas" value={summary.receitas} />
+            <SummaryCard title="Total de despesas" value={summary.despesas} />
           </div>
-          <aside className="bg-white p-4 rounded border border-gray-200">
-            <h3 className="font-medium">Orçamentos definidos</h3>
-            <p className="text-sm text-gray-500 mt-1">Veja quanto já foi gasto por categoria</p>
-            <div className="grid grid-cols-2 gap-2 mt-4">
-              {categories.slice(0, 4).map(c => <button key={c.id} className="bg-gray-100 py-2 px-4 rounded text-sm font-medium hover:bg-gray-200">{c.name}</button>)}
-            </div>
-          </aside>
-        </div>
-      </section>
-    </main>
-  </div>
-);
+        </section>
 
-const TransactionModal = ({ showModal, setShowModal, transactionType, setTransactionType, transactionData, handleValorChange, handleTransactionChange, categories }) => {
+        <section className="mt-6 lg:mt-8">
+          <h2 className="text-lg lg:text-xl font-bold">Últimas movimentações</h2>
+          <p className="text-sm text-gray-500 mt-1">Visualize suas transações mais recentes</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            {recentTransactions.length > 0 ? (
+              recentTransactions.map(transaction => (
+                <TransactionCard 
+                  key={transaction.id}
+                  icon={<Coffee size={20} />}
+                  category={transaction.categoryName}
+                  value={`${transaction.type === 'Despesa' ? '-' : '+'}R$ ${transaction.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                  date={new Date(transaction.date).toLocaleDateString('pt-BR')}
+                />
+              ))
+            ) : (
+              <div className="col-span-full text-center text-gray-500 py-8">
+                <p>Nenhuma transação encontrada</p>
+                <p className="text-sm">Adicione sua primeira transação!</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="mt-6 lg:mt-8">
+          <h2 className="text-lg lg:text-xl font-bold">Suas metas financeiras</h2>
+          <p className="text-sm text-gray-500 mt-1">Acompanhe o progresso</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {metas.slice(0, 4).map(meta => (
+                <GoalCard 
+                  key={meta.id}
+                  icon={<Shield size={20} />} // TODO: Mapear ícones por categoria
+                  title={meta.name}
+                  progress={meta.percentage || 0}
+                  value={`R$ ${meta.current.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / R$ ${meta.target.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                />
+              ))}
+              {metas.length === 0 && (
+                <div className="col-span-full text-center text-gray-500 py-8">
+                  <p>Nenhuma meta cadastrada</p>
+                  <p className="text-sm">Defina suas metas financeiras!</p>
+                </div>
+              )}
+            </div>
+            <aside className="bg-white p-4 rounded border border-gray-200">
+              <h3 className="font-medium">Orçamentos definidos</h3>
+              <p className="text-sm text-gray-500 mt-1">Veja quanto já foi gasto por categoria</p>
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                {categories.slice(0, 4).map(c => <button key={c.id} className="bg-gray-100 py-2 px-4 rounded text-sm font-medium hover:bg-gray-200">{c.name}</button>)}
+              </div>
+            </aside>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+};
+
+const TransactionModal = ({ showModal, setShowModal, transactionType, setTransactionType, transactionData, handleValorChange, handleTransactionChange, categories, onTransactionSaved }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  
   if (!showModal) return null;
 
-  const handleSaveTransaction = () => {
-    console.log('Salvar transação:', { ...transactionData, valor: parseCurrency(transactionData.valor), type: transactionType });
-    setShowModal(false);
+  const handleSaveTransaction = async () => {
+    if (!transactionData.valor || !transactionData.date || !transactionData.category) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    const selectedCategory = categories.find(cat => cat.name === transactionData.category);
+    if (!selectedCategory) {
+      alert('Categoria inválida.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await api.createTransacao({
+        valor: transactionData.valor,
+        date: transactionData.date,
+        description: transactionData.description || '',
+        type: transactionType,
+        categoryId: selectedCategory.id
+      });
+
+      alert('Transação salva com sucesso!');
+      setShowModal(false);
+      
+      if (onTransactionSaved) {
+        onTransactionSaved();
+      }
+    } catch (error) {
+      console.error('Erro ao salvar transação:', error);
+      alert('Erro ao salvar transação. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const selectArrow = <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 pointer-events-none"><svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.516 7.548c.436-.446 1.043-.48 1.576 0L10 10.405l2.908-2.857c.533-.48 1.14-.446 1.576 0 .436.445.408 1.197 0 1.615l-3.734 3.704c-.533.529-1.394.529-1.928 0L5.516 9.163c-.409-.418-.436-1.17 0-1.615z"/></svg></div>;
@@ -165,9 +267,12 @@ const TransactionModal = ({ showModal, setShowModal, transactionType, setTransac
               <input type="text" name="description" value={transactionData.description} onChange={handleTransactionChange} maxLength={30} className={inputClasses} placeholder="(Máx 30 caracteres)" />
             </FormField>
           </div>
-          
-          <button className={`${primaryBtnClasses} w-full py-3`} onClick={handleSaveTransaction}>
-            Salvar Transação
+            <button 
+            className={`${primaryBtnClasses} w-full py-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`} 
+            onClick={handleSaveTransaction}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Salvando...' : 'Salvar Transação'}
           </button>
         </div>
       </div>
@@ -175,29 +280,59 @@ const TransactionModal = ({ showModal, setShowModal, transactionType, setTransac
   );
 };
 
-const CategoriesModal = ({ showCategoriesModal, setShowCategoriesModal, categories, setCategories }) => {
+const CategoriesModal = ({ showCategoriesModal, setShowCategoriesModal, categories, onCategoriesChanged }) => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingCategory, setEditingCategory] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
   if (!showCategoriesModal) return null;
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
-    const newCategory = { id: Date.now(), name: newCategoryName.trim(), type: 'custom', usedIn: [] };
-    setCategories(prev => [...prev, newCategory]);
-    setNewCategoryName('');
+      try {
+      await api.createCategoria({
+        name: newCategoryName.trim(),
+        type: 'Despesa'
+      });
+      
+      setNewCategoryName('');
+      if (onCategoriesChanged) {
+        onCategoriesChanged();
+      }
+    } catch (error) {
+      console.error('Erro ao criar categoria:', error);
+      alert('Erro ao criar categoria. Tente novamente.');
+    }
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingCategory?.name.trim()) return;
-    setCategories(prev => prev.map(cat => cat.id === editingCategory.id ? { ...cat, name: editingCategory.name.trim() } : cat));
-    setEditingCategory(null);
+      try {
+      await api.updateCategoria(editingCategory.id, {
+        name: editingCategory.name.trim(),
+        type: editingCategory.type || 'Despesa'
+      });
+      
+      setEditingCategory(null);
+      if (onCategoriesChanged) {
+        onCategoriesChanged();
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar categoria:', error);
+      alert('Erro ao atualizar categoria. Tente novamente.');
+    }
   };
-  
-  const confirmDelete = () => {
-    setCategories(prev => prev.filter(cat => cat.id !== deletingId));
-    setDeletingId(null);
+    const confirmDelete = async () => {    try {
+      await api.deleteCategoria(deletingId);
+      
+      setDeletingId(null);
+      if (onCategoriesChanged) {
+        onCategoriesChanged();
+      }
+    } catch (error) {
+      console.error('Erro ao excluir categoria:', error);
+      alert('Erro ao excluir categoria. Tente novamente.');
+    }
   };
 
   const handleKeyPress = (event, action) => {
@@ -280,34 +415,127 @@ const FinanceApp = ({ user, onLogout }) => {
   const [showModal, setShowModal] = useState(false);
   const [showCategoriesModal, setShowCategoriesModal] = useState(false);
   const [transactionType, setTransactionType] = useState('Receita');
-  const [transactionData, setTransactionData] = useState({ valor: '0,00', date: '', description: '', category: '' });
-  const [categories, setCategories] = useState([
-    { id: 1, name: 'Alimentação', type: 'default', usedIn: ['Despesas', 'Orçamento'] },
-    { id: 2, name: 'Transporte', type: 'default', usedIn: ['Despesas', 'Orçamento'] },
-    { id: 3, name: 'Lazer', type: 'default', usedIn: ['Despesas', 'Metas'] },
-    { id: 4, name: 'Compras', type: 'default', usedIn: ['Despesas', 'Orçamento'] },
-    { id: 5, name: 'Salário', type: 'default', usedIn: ['Receitas'] },
-    { id: 6, name: 'Viagem', type: 'default', usedIn: ['Metas'] }
-  ]);
+  const [transactionData, setTransactionData] = useState({ valor: '0,00', date: '', description: '', category: '' });  const [categories, setCategories] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [metas, setMetas] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        setLoading(true);
+        const [categoriesData, transactionsData, metasData] = await Promise.all([
+          api.getCategorias(),
+          api.getTransacoes(),
+          api.getMetas()
+        ]);
+        const mappedCategories = categoriesData.map(cat => ({
+          id: cat.idCategoria,
+          name: cat.nome,
+          type: cat.tipo,
+          usedIn: [] // TODO: Implementar lógica de uso quando necessário
+        }));
+          const mappedTransactions = transactionsData.map(trans => ({
+          id: trans.idMovimentacao,
+          valor: trans.valor,
+          date: trans.data_movimentacao,
+          description: trans.descricao,
+          type: trans.tipo,
+          categoryId: trans.categoria_id,
+          categoryName: categoriesData.find(cat => cat.idCategoria === trans.categoria_id)?.nome || 'Sem categoria'
+        }));        const mappedMetas = metasData.map(meta => ({
+          id: meta.idMeta,
+          name: meta.nome,
+          target: meta.valor_objetivo,
+          current: meta.valor_atual,
+          percentage: meta.progresso_percentual || 0,
+          description: meta.descricao,
+          categoryId: null,
+          categoryName: 'Geral'
+        }));
+          setCategories(mappedCategories);
+        setTransactions(mappedTransactions);
+        setMetas(mappedMetas);
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+        if (err.response?.status === 401) {
+          alert('Sessão expirada. Você será redirecionado para o login.');
+          api.logout();
+          onLogout();
+          return;
+        }
+        
+        alert('Erro ao carregar dados. Tente novamente.');
+      } finally {
+        setLoading(false);
+      }
+    };    loadInitialData();
+  }, [onLogout]);
   const handleValorChange = e => setTransactionData(prev => ({ ...prev, valor: formatCurrency(e.target.value) }));
   const handleTransactionChange = ({ target: { name, value } }) => setTransactionData(prev => ({ ...prev, [name]: value }));
   const handleCloseModal = () => {
     setShowModal(false);
-    setTransactionData({ valor: '0,00', date: '', description: '', category: '' }); // Reseta o formulário
+    setTransactionData({ valor: '0,00', date: '', description: '', category: '' });
+  };
+  const reloadTransactions = async () => {
+    try {
+      const transactionsData = await api.getTransacoes();
+      const mappedTransactions = transactionsData.map(trans => ({
+        id: trans.idMovimentacao,
+        valor: trans.valor,
+        date: trans.data_movimentacao,
+        description: trans.descricao,
+        type: trans.tipo,
+        categoryId: trans.categoria_id,
+        categoryName: categories.find(cat => cat.id === trans.categoria_id)?.name || 'Sem categoria'
+      }));
+      setTransactions(mappedTransactions);
+    } catch (err) {
+      console.error('Erro ao recarregar transações:', err);
+    }
+  };  const reloadCategories = async () => {
+    try {
+      const categoriesData = await api.getCategorias();
+      const mappedCategories = categoriesData.map(cat => ({
+        id: cat.idCategoria,
+        name: cat.nome,
+        type: cat.tipo,
+        usedIn: []
+      }));
+      setCategories(mappedCategories);
+    } catch (err) {
+      console.error('Erro ao recarregar categorias:', err);
+    }
+  };
+
+  const reloadMetas = async () => {
+    try {
+      const metasData = await api.getMetas();
+      const mappedMetas = metasData.map(meta => ({
+        id: meta.idMeta,
+        name: meta.nome,
+        target: meta.valor_objetivo,
+        current: meta.valor_atual,
+        percentage: meta.progresso_percentual || 0,
+        description: meta.descricao,
+        categoryId: null,
+        categoryName: 'Geral'
+      }));
+      setMetas(mappedMetas);
+    } catch (err) {
+      console.error('Erro ao recarregar metas:', err);
+    }
   };
 
   const isModalOpen = showModal || showCategoriesModal;
-
   const renderContent = () => {
   switch (currentView) {
     case 'reports':
       return <ReportsScreen />;
     case 'goals':
-      return <GoalsScreen categories={categories}/>;
+      return <GoalsScreen onMetasChanged={reloadMetas} />;
     case 'budgets':
-      return <BudgetsScreen categories={categories}/>;
-    case 'overview':
+      return <BudgetsScreen categories={categories}/>;    case 'overview':
     default:
       return (
         <OverviewContent
@@ -316,6 +544,9 @@ const FinanceApp = ({ user, onLogout }) => {
           setCurrentMonth={setCurrentMonth}
           setShowModal={setShowModal}
           categories={categories}
+          transactions={transactions}
+          metas={metas}
+          loading={loading}
         />
       );
   }
@@ -345,8 +576,7 @@ const FinanceApp = ({ user, onLogout }) => {
         </div>
         {renderContent()}
       </div>
-      
-      {/* Modais são renderizados fora da área de conteúdo principal para não serem afetados pelo blur */}
+        {/* Modais são renderizados fora da área de conteúdo principal para não serem afetados pelo blur */}
       <TransactionModal
         showModal={showModal}
         setShowModal={handleCloseModal}
@@ -356,12 +586,12 @@ const FinanceApp = ({ user, onLogout }) => {
         handleValorChange={handleValorChange}
         handleTransactionChange={handleTransactionChange}
         categories={categories}
-      />
-      <CategoriesModal
+        onTransactionSaved={reloadTransactions}
+      />      <CategoriesModal
         showCategoriesModal={showCategoriesModal}
         setShowCategoriesModal={setShowCategoriesModal}
         categories={categories}
-        setCategories={setCategories}
+        onCategoriesChanged={reloadCategories}
       />
     </div>
   );

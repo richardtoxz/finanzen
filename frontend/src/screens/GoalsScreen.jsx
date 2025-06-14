@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Edit2, Trash2, X,
   Plane, ShoppingBag, Shield, Target,
@@ -6,60 +6,54 @@ import {
   PlusIcon, BadgeDollarSign,
 } from 'lucide-react';
 import GoalCard from '../components/GoalCard';
+import { api } from '../services/api';
 
-const GoalsScreen = ({ categories }) => {
-  const [goals, setGoals] = useState([
-    { 
-      id: 1, 
-      name: 'Alimentação', 
-      current: 1500, 
-      target: 6000, 
-      icon: <Utensils size={20} />, 
-      percentage: 25, 
-      category: 'Alimentação' 
-    },
-    { 
-      id: 2, 
-      name: 'Transporte', 
-      current: 400, 
-      target: 2000, 
-      icon: <Bus size={20} />, 
-      percentage: 20, 
-      category: 'Transporte' 
-    },
-    { 
-      id: 3, 
-      name: 'Lazer', 
-      current: 700, 
-      target: 2000, 
-      icon: <PartyPopper size={20} />, 
-      percentage: 35, 
-      category: 'Lazer' 
-    },
-    { 
-      id: 4, 
-      name: 'Compras', 
-      current: 154, 
-      target: 700, 
-      icon: <ShoppingBag size={20} />, 
-      percentage: 22, 
-      category: 'Compras' 
-    }
-  ]);
+const GoalsScreen = ({ onMetasChanged }) => {
+  const [goals, setGoals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const loadGoals = async () => {
+      try {
+        setLoading(true);
+        const metasData = await api.getMetas();
+        const mappedGoals = metasData.map(meta => ({
+          id: meta.idMeta,
+          name: meta.nome,
+          target: meta.valor_objetivo,
+          current: meta.valor_atual,
+          description: meta.descricao,
+          percentage: meta.valor_objetivo > 0 ? Math.round((meta.valor_atual / meta.valor_objetivo) * 100) : 0,
+          categoryId: null,
+          category: 'Geral',
+          icon: getIconForCategory('Geral')
+        }));
+          setGoals(mappedGoals);
+      } catch (err) {
+        console.error('Erro ao carregar metas:', err);
+        if (err.response?.status === 401) {
+          alert('Sessão expirada. Você será redirecionado para o login.');
+          api.logout();
+          window.location.reload();
+        } else {
+          alert('Erro ao carregar metas. Tente novamente.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadGoals();
+  }, []);
 
   const [showModal, setShowModal] = useState(false);
-  const [editingGoal, setEditingGoal] = useState(null);
-  const [goalData, setGoalData] = useState({
+  const [editingGoal, setEditingGoal] = useState(null);  const [goalData, setGoalData] = useState({
     name: '',
     target: '',
     current: '',
-    category: '',
     description: ''
   });
   
-  // Novo estado para controle de exclusão
   const [deletingGoalId, setDeletingGoalId] = useState(null);
-
   const handleOpenModal = (goal = null) => {
     if (goal) {
       setEditingGoal(goal);
@@ -67,20 +61,18 @@ const GoalsScreen = ({ categories }) => {
         name: goal.name,
         target: formatCurrency(goal.target),
         current: goal.current.toString(),
-        category: goal.category || '',
         description: goal.description || ''
       });
     } else {
       setEditingGoal(null);
-      setGoalData({ name: '', target: '', current: '', category: '', description: '' });
+      setGoalData({ name: '', target: '', current: '', description: '' });
     }
     setShowModal(true);
   };
-
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingGoal(null);
-    setGoalData({ name: '', target: '', current: '', category: '', description: '' });
+    setGoalData({ name: '', target: '', current: '', description: '' });
   };
 
   const getIconForCategory = (category) => {
@@ -100,46 +92,70 @@ const GoalsScreen = ({ categories }) => {
       default:
         return <Target size={20} />;
     }
-  };
-
-  const handleSaveGoal = () => {
+  };  const handleSaveGoal = async () => {
     const target = parseFloat(goalData.target.replace(/[R$\s.]/g, '').replace(',', '.'));
-    const current = parseFloat(goalData.current) || 0;
-    const percentage = Math.round((current / target) * 100);
-
-    if (editingGoal) {
-      setGoals(prev => prev.map(goal => 
-        goal.id === editingGoal.id 
-          ? { 
-              ...goal, 
-              name: goalData.category,
-              target, 
-              current, 
-              percentage,
-              category: goalData.category,
-              description: goalData.description,
-              icon: getIconForCategory(goalData.category)
-            }
-          : goal
-      ));
-    } else {
-      const newGoal = {
-        id: Date.now(),
-        name: goalData.category,
-        target,
-        current,
-        percentage,
-        category: goalData.category,
-        description: goalData.description,
-        icon: getIconForCategory(goalData.category)
-      };
-      setGoals(prev => [...prev, newGoal]);
+    
+    if (!goalData.name || !target) {
+      alert('Por favor, preencha o nome da meta e o valor objetivo.');
+      return;
     }
-    handleCloseModal();
+
+    try {
+      const metaData = {
+        nome: goalData.name,
+        valor_objetivo: target,
+        descricao: goalData.description || '',
+        data_limite: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 1 ano a partir de hoje
+      };
+
+      if (editingGoal) {
+        await api.updateMeta(editingGoal.id, metaData);
+      } else {
+        await api.createMeta(metaData);
+      }
+
+      const metasData = await api.getMetas();
+      const mappedGoals = metasData.map(meta => ({
+        id: meta.idMeta,
+        name: meta.nome,
+        target: meta.valor_objetivo,
+        current: meta.valor_atual,
+        description: meta.descricao,
+        percentage: meta.valor_objetivo > 0 ? Math.round((meta.valor_atual / meta.valor_objetivo) * 100) : 0,
+        categoryId: null,
+        category: 'Geral',
+        icon: getIconForCategory('Geral')
+      }));
+        setGoals(mappedGoals);
+      handleCloseModal();
+      
+      // Notifica o componente pai para recarregar as metas
+      if (onMetasChanged) {
+        onMetasChanged();
+      }
+      
+      alert(editingGoal ? 'Meta atualizada com sucesso!' : 'Meta criada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar meta:', error);
+      alert('Erro ao salvar meta. Tente novamente.');
+    }
   };
 
-  const handleDeleteGoal = (id) => {
-    setGoals(prev => prev.filter(goal => goal.id !== id));
+  const handleDeleteGoal = async (id) => {
+    try {
+      await api.deleteMeta(id);
+        setGoals(prev => prev.filter(goal => goal.id !== id));
+      
+      // Notifica o componente pai para recarregar as metas
+      if (onMetasChanged) {
+        onMetasChanged();
+      }
+      
+      alert('Meta excluída com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir meta:', error);
+      alert('Erro ao excluir meta. Tente novamente.');
+    }
   };
 
   const formatCurrency = (value) => {
@@ -158,7 +174,6 @@ const GoalsScreen = ({ categories }) => {
     setGoalData(prev => ({ ...prev, target: formatted }));
   };
 
-  // Componente de alerta para exclusão
   const DeleteAlert = ({ onConfirm, onCancel }) => (
     <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-white border border-red-200 rounded-lg shadow-lg p-4 z-60 min-w-[380px]">
       <div className="flex items-start">
@@ -184,7 +199,6 @@ const GoalsScreen = ({ categories }) => {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Alerta de exclusão */}
       {deletingGoalId && (
         <DeleteAlert 
           onConfirm={() => {
@@ -212,42 +226,57 @@ const GoalsScreen = ({ categories }) => {
         >
           Nova Meta
         </button>
-      </header>
-
-      <main className="p-4 lg:p-6 flex-1 overflow-y-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl lg:text-3xl font-bold mb-2">Suas metas financeiras</h1>
-          <p className="text-gray-500">Acompanhe o seu progresso</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {goals.map(goal => (
-            <div key={goal.id} className="relative group">
-              <GoalCard
-                icon={goal.icon}
-                title={goal.name}
-                progress={goal.percentage}
-                value={`${formatCurrency(goal.current)} / ${formatCurrency(goal.target)}`}
-              />
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
-                <button
-                  onClick={() => handleOpenModal(goal)}
-                  className="p-1 bg-white rounded-full shadow-md hover:bg-gray-50 text-blue-600 cursor-pointer"
-                  title="Editar meta"
-                >
-                  <Edit2 size={14} />
-                </button>
-                <button
-                  onClick={() => setDeletingGoalId(goal.id)}
-                  className="p-1 bg-white rounded-full shadow-md hover:bg-gray-50 text-red-600 cursor-pointer"
-                  title="Excluir meta"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
+      </header>      <main className="p-4 lg:p-6 flex-1 overflow-y-auto">
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+              <p className="text-gray-600">Carregando metas...</p>
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <>
+            <div className="text-center mb-8">
+              <h1 className="text-2xl lg:text-3xl font-bold mb-2">Suas metas financeiras</h1>
+              <p className="text-gray-500">Acompanhe o seu progresso</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              {goals.map(goal => (
+                <div key={goal.id} className="relative group">
+                  <GoalCard
+                    icon={goal.icon}
+                    title={goal.name}
+                    progress={goal.percentage}
+                    value={`${formatCurrency(goal.current)} / ${formatCurrency(goal.target)}`}
+                  />
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
+                    <button
+                      onClick={() => handleOpenModal(goal)}
+                      className="p-1 bg-white rounded-full shadow-md hover:bg-gray-50 text-blue-600 cursor-pointer"
+                      title="Editar meta"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => setDeletingGoalId(goal.id)}
+                      className="p-1 bg-white rounded-full shadow-md hover:bg-gray-50 text-red-600 cursor-pointer"
+                      title="Excluir meta"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {goals.length === 0 && (
+                <div className="col-span-full text-center text-gray-500 py-8">
+                  <p>Nenhuma meta cadastrada</p>
+                  <p className="text-sm">Clique em "Nova Meta" para começar!</p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </main>
 
       {showModal && (
@@ -264,9 +293,20 @@ const GoalsScreen = ({ categories }) => {
                 >
                   <X size={24} />
                 </button>
-              </header>
+              </header>              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome da meta
+                  </label>
+                  <input
+                    type="text"
+                    value={goalData.name}
+                    onChange={(e) => setGoalData(prev => ({ ...prev, name: e.target.value }))}
+                    className={inputClasses}
+                    placeholder="Ex: Reserva de emergência"
+                  />
+                </div>
 
-              <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Valor da meta
@@ -288,29 +328,6 @@ const GoalsScreen = ({ categories }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Categoria
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={goalData.category}
-                      onChange={(e) => setGoalData(prev => ({ ...prev, category: e.target.value }))}
-                      className={`${inputClasses} appearance-none bg-white pr-10`}
-                    >
-                      <option value="" disabled>Selecione uma categoria</option>
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.name}>{cat.name}</option>
-                      ))}
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 pointer-events-none">
-                      <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                        <path d="M5.516 7.548c.436-.446 1.043-.48 1.576 0L10 10.405l2.908-2.857c.533-.48 1.14-.446 1.576 0 .436.445.408 1.197 0 1.615l-3.734 3.704c-.533.529-1.394.529-1.928 0L5.516 9.163c-.409-.418-.436-1.17 0-1.615z"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Descrição
                   </label>
                   <input
@@ -321,12 +338,10 @@ const GoalsScreen = ({ categories }) => {
                     placeholder="(opcional)"
                   />
                 </div>
-              </div>
-
-              <button
+              </div>              <button
                 onClick={handleSaveGoal}
                 className={`${primaryBtnClasses} w-full py-3 text-white bg-black hover:bg-gray-800 cursor-pointer`}
-                disabled={!goalData.target || !goalData.category}
+                disabled={!goalData.name || !goalData.target}
               >
                 Salvar
               </button>
