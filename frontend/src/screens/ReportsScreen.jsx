@@ -1,3 +1,4 @@
+// TODO: Conectar à API quando os endpoints de Relatórios forem implementados
 import { useState } from 'react';
 import { BarChart3 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
