@@ -143,3 +143,45 @@ class MetaResponseSchema(BaseModel):
     progresso_percentual: float
 
     model_config = ConfigDict(from_attributes=True)
+
+class OrcamentoCreateSchema(BaseModel):
+    nome: str = Field(..., min_length=1, max_length=150)
+    valor_orcado: Decimal = Field(..., gt=0, decimal_places=2)
+    data_inicio: date
+    data_fim: date
+    categoria_id: Optional[int] = Field(None, gt=0)
+
+    @field_validator('data_fim')
+    @classmethod
+    def validate_dates(cls, v, info):
+        if 'data_inicio' in info.data and v < info.data['data_inicio']:
+            raise ValueError("A data final não pode ser anterior à data de início.")
+        return v
+
+class OrcamentoUpdateSchema(BaseModel):
+    nome: Optional[str] = Field(None, min_length=1, max_length=150)
+    valor_orcado: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
+    data_inicio: Optional[date] = None
+    data_fim: Optional[date] = None
+    categoria_id: Optional[int] = Field(None, gt=0)
+
+    @field_validator('data_fim')
+    @classmethod
+    def validate_dates_for_update(cls, v, info):
+        if 'data_inicio' in info.data and info.data['data_inicio'] is not None and v is not None:
+            if v < info.data['data_inicio']:
+                raise ValueError("A nova data final não pode ser anterior à nova data de início.")
+        return v
+
+class OrcamentoResponseSchema(BaseModel):
+    idOrcamento: int
+    nome: str
+    valor_orcado: Decimal
+    valor_gasto: Decimal # Campo que será calculado no backend
+    data_inicio: date
+    data_fim: date
+    usuario_id: int
+    categoria_id: Optional[int] = None
+    categoria: Optional[CategoriaSimpleResponseSchema] = None
+
+    model_config = ConfigDict(from_attributes=True)

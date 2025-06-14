@@ -6,6 +6,8 @@ from controllers import auth_controller, categoria_controller, movimentacao_cont
 from core.config import settings
 import logging
 
+from finanzen.backend.controllers import orcamentos_controller
+
 logging.basicConfig(
     level=logging.INFO) 
 logger = logging.getLogger(__name__)    
@@ -41,6 +43,7 @@ app.include_router(auth_controller.router)
 app.include_router(categoria_controller.router)
 app.include_router(movimentacao_controller.router)
 app.include_router(meta_controller.router)
+app.include_router(orcamentos_controller.router)
 
 @app.get("/", tags=["Root"])
 async def read_root():

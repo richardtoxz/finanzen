@@ -24,6 +24,7 @@ class Usuario(Base):
     categorias = relationship("CategoriaMov", back_populates="usuario", cascade="all, delete-orphan")
     movimentacoes = relationship("Movimentacao", back_populates="usuario", cascade="all, delete-orphan")
     metas = relationship("MetaFinanceira", back_populates="usuario", cascade="all, delete-orphan")
+    orcamentos = relationship("Orcamento", back_populates="usuario", cascade="all, delete-orphan")
 
 class Credenciais(Base):
     __tablename__ = "credenciais"
@@ -68,6 +69,7 @@ class CategoriaMov(Base):
     
     usuario = relationship("Usuario", back_populates="categorias")
     movimentacoes = relationship("Movimentacao", back_populates="categoria", cascade="all, delete-orphan")
+    orcamentos = relationship("Orcamento", back_populates="categoria", cascade="all, delete-orphan")
 
 class Movimentacao(Base):
     __tablename__ = "movimentacao"
@@ -84,6 +86,7 @@ class Movimentacao(Base):
     usuario = relationship("Usuario", back_populates="movimentacoes")
     categoria = relationship("CategoriaMov", back_populates="movimentacoes")
     meta = relationship("MetaFinanceira", back_populates="movimentacoes")
+    orcamento = relationship("Orcamento", back_populates="movimentacoes")
 
 class MetaFinanceira(Base):
     __tablename__ = "meta_financeira"
@@ -98,3 +101,19 @@ class MetaFinanceira(Base):
     
     usuario = relationship("Usuario", back_populates="metas")
     movimentacoes = relationship("Movimentacao", back_populates="meta", cascade="all, delete-orphan")
+
+class Orcamento(Base):
+    __tablename__ = "orcamento"
+    __table_args__ = {'extend_existing': True}
+    idOrcamento = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    nome = Column(String(150), nullable=False) # Ex: "Orçamento de Alimentação Jun/2024"
+    valor_orcado = Column(DECIMAL(10, 2), nullable=False)
+    valor_gasto = Column(DECIMAL(10, 2), nullable=False, default=0) # Para acompanhar o gasto em relação ao orçamento
+    data_inicio = Column(Date, nullable=False)
+    data_fim = Column(Date, nullable=False)
+    usuario_id = Column(Integer, ForeignKey("usuario.idUsuario"), nullable=False)
+    categoria_id = Column(Integer, ForeignKey("categoria_mov.idCategoria"), nullable=True) # Opcional: orçamento pode ser para uma categoria específica ou geral
+
+    usuario = relationship("Usuario", back_populates="orcamentos")
+    categoria = relationship("CategoriaMov", back_populates="orcamentos")
+    movimentacoes = relationship("Movimentacao", back_populates="orcamento") # Movimentações que se enquadram neste orçamento
