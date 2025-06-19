@@ -196,3 +196,42 @@ class ReportsDataSchema(BaseModel):
     pieChartData: List[PieChartDataSchema]
     barChartData: List[BarChartDataSchema]
     summaryData: SummaryDataSchema
+
+# Perfil do Usuário Schemas
+class UserProfileResponseSchema(BaseModel):
+    """Schema para resposta com dados do perfil do usuário"""
+    idUsuario: int
+    nomeUsuario: str
+    email: str
+    objetivoPreferencias: Optional[str] = None
+    rendaMensalPreferencias: Optional[str] = None
+    is_verified: bool
+
+class UserProfileUpdateSchema(BaseModel):
+    """Schema para atualização parcial do perfil do usuário"""
+    nomeUsuario: Optional[str] = Field(None, min_length=2, max_length=150)
+    email: Optional[EmailStr] = None
+    objetivoPreferencias: Optional[str] = Field(None, max_length=100)
+    rendaMensalPreferencias: Optional[str] = Field(None, max_length=50)
+
+class UserPasswordUpdateSchema(BaseModel):
+    """Schema específico para mudança de senha"""
+    senha_atual: str = Field(..., min_length=1)
+    nova_senha: str = Field(..., min_length=8, max_length=82)
+
+    @field_validator('nova_senha')
+    @classmethod
+    def validate_nova_senha(cls, value):
+        if len(value) < 8:
+            raise ValueError("Nova senha deve ter pelo menos 8 caracteres")
+        if len(value) > 82:
+            raise ValueError("Nova senha não pode ter mais de 82 caracteres")
+        if not re.search(r"[A-Z]", value):
+            raise ValueError("Nova senha deve conter pelo menos uma letra maiúscula")    
+        if not re.search(r"[a-z]", value):
+            raise ValueError("Nova senha deve conter pelo menos uma letra minúscula")    
+        if not re.search(r"\d", value):
+            raise ValueError("Nova senha deve conter pelo menos um número")  
+        if not re.search(r"[!\"#$%&'()*+,\-./:;<=>?@\[\\\]^_`{|}~]", value):
+            raise ValueError('Nova senha deve conter pelo menos um caractere especial válido.')  
+        return value

@@ -9,7 +9,6 @@ const ReportsScreen = () => {
   const [reportsData, setReportsData] = useState(null);  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Função para carregar dados dos relatórios
   const loadReportsData = async (periodo) => {
     try {
       setLoading(true);
@@ -28,16 +27,13 @@ const ReportsScreen = () => {
       setLoading(false);
     }
   };
-  // Carregar dados iniciais
   useEffect(() => {
     loadReportsData(selectedPeriod);
   }, [selectedPeriod]);
-  // Atualizar dados quando o período mudar
   const handlePeriodChange = (e) => {
     setSelectedPeriod(e.target.value);
   };
 
-  // Dados fallback para quando está carregando ou com erro
   const fallbackPieData = [
     { name: 'Carregando...', value: 100, color: '#e5e7eb' }
   ];
@@ -46,17 +42,15 @@ const ReportsScreen = () => {
     { month: 'Carregando...', receitas: 0, despesas: 0 }
   ];
 
-  // Dados a serem usados nos gráficos
   const pieData = loading || error ? fallbackPieData : (reportsData?.pieChartData || []);
   const barData = loading || error ? fallbackBarData : (reportsData?.barChartData || []);
 
   return (
     <div className="p-6 flex-1 overflow-y-auto">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Relatórios</h1>
         <p className="text-sm text-gray-500 mt-1">Acompanhe o progresso</p>
-      </div>      {/* Cards de Resumo */}
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <h3 className="text-sm font-medium text-gray-600">Receitas Totais</h3>
@@ -89,7 +83,7 @@ const ReportsScreen = () => {
             </span>
           </div>
         </div>
-      </div>      {/* Filtros */}
+      </div>
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-700 mb-2">Período</label>
@@ -117,7 +111,7 @@ const ReportsScreen = () => {
             <option>Compras</option>
           </select>
         </div>
-      </div>      {/* Gráfico de Pizza */}
+      </div>
       <div className="bg-white p-6 rounded-lg border border-gray-200 mb-8">
         <div className="flex justify-center">
           <div className="w-80 h-80">
@@ -172,7 +166,6 @@ const ReportsScreen = () => {
         </div>
       </div>
 
-      {/* Gráfico de Barras */}
       <div className="bg-white p-6 rounded-lg border border-gray-200">
         <h3 className="text-lg font-bold mb-6">Receitas e despesas</h3>
         

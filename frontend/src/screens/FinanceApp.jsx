@@ -206,7 +206,7 @@ const OverviewContent = ({ user, currentMonth, setCurrentMonth, setShowModal, ca
   );
 };
 
-const TransactionModal = ({ showModal, setShowModal, transactionType, setTransactionType, transactionData, handleValorChange, handleTransactionChange, categories, onTransactionSaved }) => {
+const TransactionModal = ({ showModal, setShowModal, transactionType, setTransactionType, transactionData, handleValorChange, handleTransactionChange, categories, metas, onTransactionSaved }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   if (!showModal) return null;
@@ -221,16 +221,15 @@ const TransactionModal = ({ showModal, setShowModal, transactionType, setTransac
     if (!selectedCategory) {
       alert('Categoria inválida.');
       return;
-    }
-
-    try {
+    }    try {
       setIsLoading(true);
       await api.createTransacao({
         valor: transactionData.valor,
         date: transactionData.date,
         description: transactionData.description || '',
         type: transactionType,
-        categoryId: selectedCategory.id
+        categoryId: selectedCategory.id,
+        meta_id: transactionData.meta_id ? parseInt(transactionData.meta_id) : null
       });
 
       alert('Transação salva com sucesso!');
@@ -271,11 +270,24 @@ const TransactionModal = ({ showModal, setShowModal, transactionType, setTransac
             </FormField>
             <FormField label="Data">
               <input type="date" name="date" value={transactionData.date} onChange={handleTransactionChange} className={inputClasses} />
-            </FormField>
-            <FormField label="Categoria">
+            </FormField>            <FormField label="Categoria">
               <select name="category" value={transactionData.category} onChange={handleTransactionChange} className={`${inputClasses} appearance-none bg-white`} defaultValue="">
                 <option value="" disabled>Selecione</option>
                 {categories.map(category => <option key={category.id} value={category.name}>{category.name}</option>)}
+              </select>
+              {selectArrow}
+            </FormField>
+            <FormField label="Meta Associada (Opcional)">
+              <select 
+                name="meta_id" 
+                value={transactionData.meta_id || ''} 
+                onChange={handleTransactionChange} 
+                className={`${inputClasses} appearance-none bg-white`}
+              >
+                <option value="">Nenhuma meta</option>
+                {metas.map(meta => (
+                  <option key={meta.id} value={meta.id}>{meta.name}</option>
+                ))}
               </select>
               {selectArrow}
             </FormField>
@@ -432,7 +444,7 @@ const FinanceApp = ({ user, onLogout }) => {
   const [showModal, setShowModal] = useState(false);
   const [showCategoriesModal, setShowCategoriesModal] = useState(false);
   const [transactionType, setTransactionType] = useState('Receita');
-  const [transactionData, setTransactionData] = useState({ valor: '0,00', date: '', description: '', category: '' });
+  const [transactionData, setTransactionData] = useState({ valor: '0,00', date: '', description: '', category: '', meta_id: null });
   const [categories, setCategories] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [metas, setMetas] = useState([]);
@@ -501,11 +513,27 @@ const FinanceApp = ({ user, onLogout }) => {
     }; loadInitialData();
   }, [onLogout]);
   const handleValorChange = e => setTransactionData(prev => ({ ...prev, valor: formatCurrency(e.target.value) }));
-  const handleTransactionChange = ({ target: { name, value } }) => setTransactionData(prev => ({ ...prev, [name]: value }));
-  const handleCloseModal = () => {
+  const handleTransactionChange = ({ target: { name, value } }) => setTransactionData(prev => ({ ...prev, [name]: value }));  const handleCloseModal = () => {
     setShowModal(false);
-    setTransactionData({ valor: '0,00', date: '', description: '', category: '' });
+    setTransactionData({ valor: '0,00', date: '', description: '', category: '', meta_id: null });
   };
+  const reloadAllData = async () => {
+    try {
+      await reloadTransactions();
+      
+      await reloadMetas();
+      
+      try {
+        const dashboardData = await api.getDashboardSummary();
+        setDashboardSummary(dashboardData);
+      } catch (err) {
+        console.error('Erro ao recarregar resumo do dashboard:', err);
+      }
+    } catch (err) {
+      console.error('Erro ao recarregar dados:', err);
+    }
+  };
+
   const reloadTransactions = async () => {
     try {
       const transactionsData = await api.getTransacoes();
@@ -597,15 +625,14 @@ const FinanceApp = ({ user, onLogout }) => {
         setCurrentView={setCurrentView}
         setShowCategoriesModal={setShowCategoriesModal}
       />
-
+      
       <div className={`flex-1 flex flex-col overflow-hidden transition-filter duration-300 ${isModalOpen ? 'filter blur-sm pointer-events-none' : ''}`}>
         <div className="lg:hidden flex justify-between items-center px-4 py-3 bg-white border-b border-gray-200">
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-md text-gray-500"><Menu size={24} /></button>
           <div className="font-bold text-lg">Finanzen</div>
         </div>
         {renderContent()}
-      </div>
-      <TransactionModal
+      </div>      <TransactionModal
         showModal={showModal}
         setShowModal={handleCloseModal}
         transactionType={transactionType}
@@ -614,7 +641,8 @@ const FinanceApp = ({ user, onLogout }) => {
         handleValorChange={handleValorChange}
         handleTransactionChange={handleTransactionChange}
         categories={categories}
-        onTransactionSaved={reloadTransactions}
+        metas={metas}
+        onTransactionSaved={reloadAllData}
       />
       <CategoriesModal
         showCategoriesModal={showCategoriesModal}

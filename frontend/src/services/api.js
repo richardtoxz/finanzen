@@ -183,7 +183,7 @@ export const api = {
         const url = queryString ? `${API_URL}/transacoes?${queryString}` : `${API_URL}/transacoes`;
 
         return authenticatedFetch(url);
-    }, async createTransacao(data) {
+    },    async createTransacao(data) {
         return authenticatedFetch(`${API_URL}/transacoes`, {
             method: 'POST',
             body: JSON.stringify({
@@ -191,10 +191,11 @@ export const api = {
                 valor: parseFloat(data.valor.replace(/[R$\s.]/g, '').replace(',', '.')),
                 descricao: sanitizeInput(data.description || ''),
                 data_movimentacao: sanitizeInput(data.date),
-                categoria_id: parseInt(data.categoryId)
+                categoria_id: parseInt(data.categoryId),
+                meta_id: data.meta_id ? parseInt(data.meta_id) : null
             })
         });
-    }, async updateTransacao(id, data) {
+    },async updateTransacao(id, data) {
         return authenticatedFetch(`${API_URL}/transacoes/${id}`, {
             method: 'PUT',
             body: JSON.stringify({

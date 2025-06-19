@@ -15,7 +15,6 @@ class MetaService:
         """Cria uma nova meta financeira"""
         db_meta = create_meta(self.db, meta_data, usuario_id)
         
-        # Calcula progresso inicial (será 0)
         valor_atual, progresso_percentual = get_meta_progress(self.db, db_meta.idMeta)
         
         return MetaResponseSchema(

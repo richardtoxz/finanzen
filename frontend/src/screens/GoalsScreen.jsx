@@ -27,7 +27,7 @@ const GoalsScreen = ({ onMetasChanged }) => {
           category: 'Geral',
           icon: getIconForCategory('Geral')
         }));
-          setGoals(mappedGoals);
+        setGoals(mappedGoals);
       } catch (err) {
         console.error('Erro ao carregar metas:', err);
         if (err.response?.status === 401) {
@@ -46,13 +46,13 @@ const GoalsScreen = ({ onMetasChanged }) => {
   }, []);
 
   const [showModal, setShowModal] = useState(false);
-  const [editingGoal, setEditingGoal] = useState(null);  const [goalData, setGoalData] = useState({
+  const [editingGoal, setEditingGoal] = useState(null); const [goalData, setGoalData] = useState({
     name: '',
     target: '',
     current: '',
     description: ''
   });
-  
+
   const [deletingGoalId, setDeletingGoalId] = useState(null);
   const handleOpenModal = (goal = null) => {
     if (goal) {
@@ -92,9 +92,9 @@ const GoalsScreen = ({ onMetasChanged }) => {
       default:
         return <Target size={20} />;
     }
-  };  const handleSaveGoal = async () => {
+  }; const handleSaveGoal = async () => {
     const target = parseFloat(goalData.target.replace(/[R$\s.]/g, '').replace(',', '.'));
-    
+
     if (!goalData.name || !target) {
       alert('Por favor, preencha o nome da meta e o valor objetivo.');
       return;
@@ -126,14 +126,13 @@ const GoalsScreen = ({ onMetasChanged }) => {
         category: 'Geral',
         icon: getIconForCategory('Geral')
       }));
-        setGoals(mappedGoals);
+      setGoals(mappedGoals);
       handleCloseModal();
-      
-      // Notifica o componente pai para recarregar as metas
+
       if (onMetasChanged) {
         onMetasChanged();
       }
-      
+
       alert(editingGoal ? 'Meta atualizada com sucesso!' : 'Meta criada com sucesso!');
     } catch (error) {
       console.error('Erro ao salvar meta:', error);
@@ -144,13 +143,12 @@ const GoalsScreen = ({ onMetasChanged }) => {
   const handleDeleteGoal = async (id) => {
     try {
       await api.deleteMeta(id);
-        setGoals(prev => prev.filter(goal => goal.id !== id));
-      
-      // Notifica o componente pai para recarregar as metas
+      setGoals(prev => prev.filter(goal => goal.id !== id));
+
       if (onMetasChanged) {
         onMetasChanged();
       }
-      
+
       alert('Meta excluída com sucesso!');
     } catch (error) {
       console.error('Erro ao excluir meta:', error);
@@ -200,7 +198,7 @@ const GoalsScreen = ({ onMetasChanged }) => {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {deletingGoalId && (
-        <DeleteAlert 
+        <DeleteAlert
           onConfirm={() => {
             handleDeleteGoal(deletingGoalId);
             setDeletingGoalId(null);
@@ -208,19 +206,19 @@ const GoalsScreen = ({ onMetasChanged }) => {
           onCancel={() => setDeletingGoalId(null)}
         />
       )}
-      
+
       <header className="border-b border-gray-200 p-4 flex flex-col lg:flex-row justify-between items-center">
         <div className="flex space-x-2 lg:space-x-4 overflow-x-auto w-full lg:w-auto py-2 scrollbar-hide">
           {['Mês atual', 'Mês anterior', 'Ano'].map(period => (
-            <button 
-              key={period} 
+            <button
+              key={period}
               className="px-3 lg:px-4 py-2 font-medium text-sm whitespace-nowrap border-b-2 border-black cursor-pointer"
             >
               {period}
             </button>
           ))}
         </div>
-        <button 
+        <button
           className={`${primaryBtnClasses} w-full lg:w-auto mt-2 lg:mt-0 text-sm cursor-pointer`}
           onClick={() => handleOpenModal()}
         >
@@ -287,7 +285,7 @@ const GoalsScreen = ({ onMetasChanged }) => {
                 <h2 className="text-xl font-bold">
                   {editingGoal ? 'Editar Meta' : 'Nova Meta'}
                 </h2>
-                <button 
+                <button
                   onClick={handleCloseModal}
                   className="text-gray-500 hover:text-gray-700 cursor-pointer"
                 >
@@ -338,7 +336,8 @@ const GoalsScreen = ({ onMetasChanged }) => {
                     placeholder="(opcional)"
                   />
                 </div>
-              </div>              <button
+              </div>
+              <button
                 onClick={handleSaveGoal}
                 className={`${primaryBtnClasses} w-full py-3 text-white bg-black hover:bg-gray-800 cursor-pointer`}
                 disabled={!goalData.name || !goalData.target}
