@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime
+from sqlalchemy import func, extract
 
 import schemas, models
 from database import get_db
@@ -85,3 +86,39 @@ def delete_movimentacao_endpoint(
 ):
     service.delete_movimentacao(db, id_transacao, usuario_id)
     return
+
+@router.get("/dashboard/summary", response_model=schemas.DashboardSummarySchema)
+def get_dashboard_summary(
+    db: Session = Depends(get_db),
+    usuario_id: int = Depends(get_current_user_id)
+):
+    """
+    Endpoint para obter resumo do dashboard com totais de receitas, despesas e saldo do mês atual.
+    """
+    current_date = datetime.now()
+    current_month = current_date.month
+    current_year = current_date.year
+    
+    receitas_query = db.query(func.sum(models.Movimentacao.valor)).filter(
+        models.Movimentacao.usuario_id == usuario_id,
+        models.Movimentacao.tipo == models.TipoMovimentacao.receita,
+        extract('month', models.Movimentacao.data_movimentacao) == current_month,
+        extract('year', models.Movimentacao.data_movimentacao) == current_year
+    ).scalar()
+    
+    despesas_query = db.query(func.sum(models.Movimentacao.valor)).filter(
+        models.Movimentacao.usuario_id == usuario_id,
+        models.Movimentacao.tipo == models.TipoMovimentacao.despesa,
+        extract('month', models.Movimentacao.data_movimentacao) == current_month,
+        extract('year', models.Movimentacao.data_movimentacao) == current_year
+    ).scalar()
+    
+    total_receitas = float(receitas_query) if receitas_query else 0.0
+    total_despesas = float(despesas_query) if despesas_query else 0.0
+    saldo_atual = total_receitas - total_despesas
+    
+    return {
+        "saldo_atual": saldo_atual,
+        "total_receitas": total_receitas,
+        "total_despesas": total_despesas
+    }

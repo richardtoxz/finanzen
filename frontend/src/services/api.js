@@ -288,6 +288,17 @@ export const api = {
         return authenticatedFetch(`${API_URL}/orcamentos/${id}`, {
             method: 'DELETE'
         });
+    },
+
+    async getDashboardSummary() {
+        return authenticatedFetch(`${API_URL}/transacoes/dashboard/summary`);
+    },
+
+    async getReportsData(periodo = 'mes_atual') {
+        const validPeriodos = ['mes_atual', 'mes_anterior', 'ano_atual'];
+        const periodoSanitized = validPeriodos.includes(periodo) ? periodo : 'mes_atual';
+        
+        return authenticatedFetch(`${API_URL}/relatorios/dados?periodo=${periodoSanitized}`);
     }
 };
 

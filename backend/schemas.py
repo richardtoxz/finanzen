@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, date
 from enum import Enum
 from decimal import Decimal
@@ -169,3 +169,30 @@ class OrcamentoResponseSchema(BaseModel):
     categoria: Optional[CategoriaSimpleResponseSchema] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+# Dashboard Summary Schema
+class DashboardSummarySchema(BaseModel):
+    saldo_atual: float
+    total_receitas: float  
+    total_despesas: float
+
+# Reports Schemas
+class PieChartDataSchema(BaseModel):
+    name: str
+    value: float
+    color: str
+
+class BarChartDataSchema(BaseModel):
+    month: str
+    receitas: float
+    despesas: float
+
+class SummaryDataSchema(BaseModel):
+    receitas_totais: float
+    despesas_totais: float
+    saldo_final: float
+
+class ReportsDataSchema(BaseModel):
+    pieChartData: List[PieChartDataSchema]
+    barChartData: List[BarChartDataSchema]
+    summaryData: SummaryDataSchema

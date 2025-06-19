@@ -1,27 +1,54 @@
-// TODO: Conectar à API quando os endpoints de Relatórios forem implementados
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BarChart3 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { api } from '../services/api';
 
 const ReportsScreen = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState('Este mês');
+  const [selectedPeriod, setSelectedPeriod] = useState('mes_atual');
   const [selectedCategory, setSelectedCategory] = useState('Todas');
+  const [reportsData, setReportsData] = useState(null);  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Dados para o gráfico de pizza
-  const pieData = [
-    { name: 'Transporte', value: 35, color: '#1e40af' },
-    { name: 'Compras', value: 25, color: '#3b82f6' },
-    { name: 'Lazer', value: 20, color: '#06b6d4' },
-    { name: 'Alimentação', value: 20, color: '#c4b5fd' }
+  // Função para carregar dados dos relatórios
+  const loadReportsData = async (periodo) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await api.getReportsData(periodo);
+      setReportsData(data);
+    } catch (err) {
+      console.error('Erro ao carregar dados dos relatórios:', err);
+      setError('Erro ao carregar dados dos relatórios');
+      if (err.response?.status === 401) {
+        alert('Sessão expirada. Você será redirecionado para o login.');
+        api.logout();
+        window.location.reload();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  // Carregar dados iniciais
+  useEffect(() => {
+    loadReportsData(selectedPeriod);
+  }, [selectedPeriod]);
+  // Atualizar dados quando o período mudar
+  const handlePeriodChange = (e) => {
+    setSelectedPeriod(e.target.value);
+  };
+
+  // Dados fallback para quando está carregando ou com erro
+  const fallbackPieData = [
+    { name: 'Carregando...', value: 100, color: '#e5e7eb' }
   ];
 
-  // Dados para o gráfico de barras
-  const barData = [
-    { month: 'Jan', receitas: 6000, despesas: 3000 },
-    { month: 'Fev', receitas: 12000, despesas: 8000 },
-    { month: 'Mar', receitas: 11000, despesas: 7500 },
-    { month: 'Abr', receitas: 7500, despesas: 12000 }
+  const fallbackBarData = [
+    { month: 'Carregando...', receitas: 0, despesas: 0 }
   ];
+
+  // Dados a serem usados nos gráficos
+  const pieData = loading || error ? fallbackPieData : (reportsData?.pieChartData || []);
+  const barData = loading || error ? fallbackBarData : (reportsData?.barChartData || []);
 
   return (
     <div className="p-6 flex-1 overflow-y-auto">
@@ -29,21 +56,28 @@ const ReportsScreen = () => {
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Relatórios</h1>
         <p className="text-sm text-gray-500 mt-1">Acompanhe o progresso</p>
-      </div>
-
-      {/* Cards de Resumo */}
+      </div>      {/* Cards de Resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <h3 className="text-sm font-medium text-gray-600">Receitas Totais</h3>
-          <p className="text-2xl font-bold mt-1">R$ 12.000</p>
+          <p className="text-2xl font-bold mt-1">
+            {loading ? 'Carregando...' : error ? 'Erro' : 
+             `R$ ${(reportsData?.summaryData?.receitas_totais || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          </p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <h3 className="text-sm font-medium text-gray-600">Despesas Totais</h3>
-          <p className="text-2xl font-bold mt-1">R$ 8.500</p>
+          <p className="text-2xl font-bold mt-1">
+            {loading ? 'Carregando...' : error ? 'Erro' : 
+             `R$ ${(reportsData?.summaryData?.despesas_totais || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          </p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <h3 className="text-sm font-medium text-gray-600">Saldo Final</h3>
-          <p className="text-2xl font-bold mt-1">R$ 3.500</p>
+          <p className="text-2xl font-bold mt-1">
+            {loading ? 'Carregando...' : error ? 'Erro' : 
+             `R$ ${(reportsData?.summaryData?.saldo_final || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          </p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="flex justify-between items-start">
@@ -55,21 +89,18 @@ const ReportsScreen = () => {
             </span>
           </div>
         </div>
-      </div>
-
-      {/* Filtros */}
+      </div>      {/* Filtros */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-700 mb-2">Período</label>
           <select 
             value={selectedPeriod} 
-            onChange={(e) => setSelectedPeriod(e.target.value)}
+            onChange={handlePeriodChange}
             className="block w-full bg-white border border-gray-300 px-3 py-2 pr-8 rounded-md focus:ring-2 focus:ring-gray-200 focus:border-gray-400 appearance-none cursor-pointer"
           >
-            <option>Este mês</option>
-            <option>Mês anterior</option>
-            <option>Últimos 3 meses</option>
-            <option>Este ano</option>
+            <option value="mes_atual">Este mês</option>
+            <option value="mes_anterior">Mês anterior</option>
+            <option value="ano_atual">Este ano</option>
           </select>
         </div>
         <div className="flex-1">
@@ -86,29 +117,43 @@ const ReportsScreen = () => {
             <option>Compras</option>
           </select>
         </div>
-      </div>
-
-      {/* Gráfico de Pizza */}
+      </div>      {/* Gráfico de Pizza */}
       <div className="bg-white p-6 rounded-lg border border-gray-200 mb-8">
         <div className="flex justify-center">
           <div className="w-80 h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={120}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Carregando dados...</p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-red-600">{error}</p>
+              </div>
+            ) : pieData.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-600">Nenhuma despesa encontrada para este período</p>              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={120}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
         
