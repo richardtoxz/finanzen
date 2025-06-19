@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, date
 from enum import Enum
 from decimal import Decimal
@@ -118,7 +118,6 @@ class MovimentacaoResponseSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-# Schemas para Metas Financeiras
 class MetaCreateSchema(BaseModel):
     nome: str = Field(..., min_length=1, max_length=150)
     valor_objetivo: Decimal = Field(..., gt=0, decimal_places=2)
@@ -143,3 +142,96 @@ class MetaResponseSchema(BaseModel):
     progresso_percentual: float
 
     model_config = ConfigDict(from_attributes=True)
+
+class OrcamentoCreateSchema(BaseModel):
+    nome: str = Field(..., min_length=1, max_length=150)
+    valor_orcado: Decimal = Field(..., gt=0, decimal_places=2)
+    data_inicio: date
+    data_fim: date
+    categoria_id: Optional[int] = Field(None, gt=0)
+
+class OrcamentoUpdateSchema(BaseModel):
+    nome: Optional[str] = Field(None, min_length=1, max_length=150)
+    valor_orcado: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
+    data_inicio: Optional[date] = None
+    data_fim: Optional[date] = None
+    categoria_id: Optional[int] = Field(None, gt=0)
+
+class OrcamentoResponseSchema(BaseModel):
+    idOrcamento: int
+    nome: str
+    valor_orcado: Decimal
+    valor_gasto: Decimal
+    data_inicio: date
+    data_fim: date
+    usuario_id: int
+    categoria_id: Optional[int] = None
+    categoria: Optional[CategoriaSimpleResponseSchema] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+# Dashboard Summary Schema
+class DashboardSummarySchema(BaseModel):
+    saldo_atual: float
+    total_receitas: float  
+    total_despesas: float
+
+# Reports Schemas
+class PieChartDataSchema(BaseModel):
+    name: str
+    value: float
+    color: str
+
+class BarChartDataSchema(BaseModel):
+    month: str
+    receitas: float
+    despesas: float
+
+class SummaryDataSchema(BaseModel):
+    receitas_totais: float
+    despesas_totais: float
+    saldo_final: float
+
+class ReportsDataSchema(BaseModel):
+    pieChartData: List[PieChartDataSchema]
+    barChartData: List[BarChartDataSchema]
+    summaryData: SummaryDataSchema
+
+# Perfil do Usuário Schemas
+class UserProfileResponseSchema(BaseModel):
+    """Schema para resposta com dados do perfil do usuário"""
+    idUsuario: int
+    nomeUsuario: str
+    email: str
+    objetivoPreferencias: Optional[str] = None
+    rendaMensalPreferencias: Optional[str] = None
+    is_verified: bool
+
+class UserProfileUpdateSchema(BaseModel):
+    """Schema para atualização parcial do perfil do usuário"""
+    nomeUsuario: Optional[str] = Field(None, min_length=2, max_length=150)
+    email: Optional[EmailStr] = None
+    objetivoPreferencias: Optional[str] = Field(None, max_length=100)
+    rendaMensalPreferencias: Optional[str] = Field(None, max_length=50)
+
+class UserPasswordUpdateSchema(BaseModel):
+    """Schema específico para mudança de senha"""
+    senha_atual: str = Field(..., min_length=1)
+    nova_senha: str = Field(..., min_length=8, max_length=82)
+
+    @field_validator('nova_senha')
+    @classmethod
+    def validate_nova_senha(cls, value):
+        if len(value) < 8:
+            raise ValueError("Nova senha deve ter pelo menos 8 caracteres")
+        if len(value) > 82:
+            raise ValueError("Nova senha não pode ter mais de 82 caracteres")
+        if not re.search(r"[A-Z]", value):
+            raise ValueError("Nova senha deve conter pelo menos uma letra maiúscula")    
+        if not re.search(r"[a-z]", value):
+            raise ValueError("Nova senha deve conter pelo menos uma letra minúscula")    
+        if not re.search(r"\d", value):
+            raise ValueError("Nova senha deve conter pelo menos um número")  
+        if not re.search(r"[!\"#$%&'()*+,\-./:;<=>?@\[\\\]^_`{|}~]", value):
+            raise ValueError('Nova senha deve conter pelo menos um caractere especial válido.')  
+        return value

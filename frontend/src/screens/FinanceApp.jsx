@@ -41,7 +41,6 @@ const DeleteAlert = ({ onConfirm, onCancel }) => (
   </div>
 );
 
-
 const Sidebar = ({ sidebarOpen, setSidebarOpen, setTransactionType, setShowModal, onLogout, currentView, setCurrentView, setShowCategoriesModal }) => (
   <div className={`fixed lg:static inset-y-0 left-0 w-64 lg:w-48 bg-white border-r border-gray-200 p-4 flex flex-col z-50 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300`}>
     <div className="flex justify-between items-center">
@@ -51,10 +50,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, setTransactionType, setShowModal
     <div className="mt-5 text-sm text-gray-500 font-medium pl-1">Discover</div>
     <nav className="mt-4 space-y-1 flex-1 overflow-y-auto">
       <SidebarItem icon={<Home size={18} />} text="Visão Geral" active={currentView === 'overview'} onClick={() => setCurrentView('overview')} />
-      <SidebarItem icon={<PlusSquare size={18} />} text="Adicionar receita" onClick={() => { setTransactionType('Receita'); setShowModal(true); }}/>
-      <SidebarItem icon={<MinusSquare size={18} />} text="Adicionar despesa" onClick={() => { setTransactionType('Despesa'); setShowModal(true); }}/>
+      <SidebarItem icon={<PlusSquare size={18} />} text="Adicionar receita" onClick={() => { setTransactionType('Receita'); setShowModal(true); }} />
+      <SidebarItem icon={<MinusSquare size={18} />} text="Adicionar despesa" onClick={() => { setTransactionType('Despesa'); setShowModal(true); }} />
       <SidebarItem icon={<Target size={18} />} text="Metas" active={currentView === 'goals'} onClick={() => setCurrentView('goals')} />
-     <SidebarItem icon={<FileText size={18} />} text="Orçamentos" active={currentView === 'budgets'} onClick={() => setCurrentView('budgets')} />
+      <SidebarItem icon={<FileText size={18} />} text="Orçamentos" active={currentView === 'budgets'} onClick={() => setCurrentView('budgets')} />
       <SidebarItem icon={<BarChart3 size={18} />} text="Relatórios" active={currentView === 'reports'} onClick={() => setCurrentView('reports')} />
       <SidebarItem icon={<Layers size={18} />} text="Gerenciar Categorias" onClick={() => setShowCategoriesModal(true)} />
       <SidebarItem icon={<Settings size={18} />} text="Configurações" />
@@ -63,7 +62,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, setTransactionType, setShowModal
   </div>
 );
 
-const OverviewContent = ({ user, currentMonth, setCurrentMonth, setShowModal, categories, transactions, metas, loading }) => {
+const OverviewContent = ({ user, currentMonth, setCurrentMonth, setShowModal, categories, transactions, metas, loading, dashboardSummary, loadingDashboard }) => {
   const getCurrentMonthName = () => {
     const now = new Date();
     const monthNames = [
@@ -73,7 +72,23 @@ const OverviewContent = ({ user, currentMonth, setCurrentMonth, setShowModal, ca
     return monthNames[now.getMonth()];
   };
 
-  const calculateSummary = () => {
+  const getSummary = () => {
+    if (loadingDashboard) {
+      return {
+        saldo: 'Carregando...',
+        receitas: 'Carregando...',
+        despesas: 'Carregando...'
+      };
+    }
+
+    if (dashboardSummary) {
+      return {
+        saldo: `R$ ${dashboardSummary.saldo_atual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        receitas: `R$ ${dashboardSummary.total_receitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        despesas: `R$ ${dashboardSummary.total_despesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      };
+    }
+
     if (!transactions || transactions.length === 0) {
       return {
         saldo: 'R$ 0,00',
@@ -81,19 +96,20 @@ const OverviewContent = ({ user, currentMonth, setCurrentMonth, setShowModal, ca
         despesas: 'R$ 0,00'
       };
     }
-    
+
     const receitas = transactions.filter(t => t.type === 'Receita').reduce((sum, t) => sum + t.valor, 0);
     const despesas = transactions.filter(t => t.type === 'Despesa').reduce((sum, t) => sum + t.valor, 0);
     const saldo = receitas - despesas;
-    
+
     return {
       saldo: `R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       receitas: `R$ ${receitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       despesas: `R$ ${despesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-    };  };
+    };
+  };
 
-  const summary = calculateSummary();
-  
+  const summary = getSummary();
+
   const recentTransactions = transactions
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 4);
@@ -122,7 +138,7 @@ const OverviewContent = ({ user, currentMonth, setCurrentMonth, setShowModal, ca
       </header>
       <main className="p-4 lg:p-6 flex-1 overflow-y-auto">
         <h1 className="text-xl lg:text-2xl font-bold">Olá, {user?.nomeUsuario || user?.name}! 👋 Pronto pra cuidar da sua grana?</h1>
-          <section className="mt-6 lg:mt-8">
+        <section className="mt-6 lg:mt-8">
           <h2 className="text-lg lg:text-xl font-bold">Seu resumo de {getCurrentMonthName()}</h2>
           <p className="text-sm text-gray-500 mt-1">Veja como andam suas finanças nesse mês</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 mt-4">
@@ -138,7 +154,7 @@ const OverviewContent = ({ user, currentMonth, setCurrentMonth, setShowModal, ca
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
             {recentTransactions.length > 0 ? (
               recentTransactions.map(transaction => (
-                <TransactionCard 
+                <TransactionCard
                   key={transaction.id}
                   icon={<Coffee size={20} />}
                   category={transaction.categoryName}
@@ -161,7 +177,7 @@ const OverviewContent = ({ user, currentMonth, setCurrentMonth, setShowModal, ca
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
             <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {metas.slice(0, 4).map(meta => (
-                <GoalCard 
+                <GoalCard
                   key={meta.id}
                   icon={<Shield size={20} />} // TODO: Mapear ícones por categoria
                   title={meta.name}
@@ -190,9 +206,9 @@ const OverviewContent = ({ user, currentMonth, setCurrentMonth, setShowModal, ca
   );
 };
 
-const TransactionModal = ({ showModal, setShowModal, transactionType, setTransactionType, transactionData, handleValorChange, handleTransactionChange, categories, onTransactionSaved }) => {
+const TransactionModal = ({ showModal, setShowModal, transactionType, setTransactionType, transactionData, handleValorChange, handleTransactionChange, categories, metas, onTransactionSaved }) => {
   const [isLoading, setIsLoading] = useState(false);
-  
+
   if (!showModal) return null;
 
   const handleSaveTransaction = async () => {
@@ -205,21 +221,20 @@ const TransactionModal = ({ showModal, setShowModal, transactionType, setTransac
     if (!selectedCategory) {
       alert('Categoria inválida.');
       return;
-    }
-
-    try {
+    }    try {
       setIsLoading(true);
       await api.createTransacao({
         valor: transactionData.valor,
         date: transactionData.date,
         description: transactionData.description || '',
         type: transactionType,
-        categoryId: selectedCategory.id
+        categoryId: selectedCategory.id,
+        meta_id: transactionData.meta_id ? parseInt(transactionData.meta_id) : null
       });
 
       alert('Transação salva com sucesso!');
       setShowModal(false);
-      
+
       if (onTransactionSaved) {
         onTransactionSaved();
       }
@@ -231,7 +246,7 @@ const TransactionModal = ({ showModal, setShowModal, transactionType, setTransac
     }
   };
 
-  const selectArrow = <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 pointer-events-none"><svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.516 7.548c.436-.446 1.043-.48 1.576 0L10 10.405l2.908-2.857c.533-.48 1.14-.446 1.576 0 .436.445.408 1.197 0 1.615l-3.734 3.704c-.533.529-1.394.529-1.928 0L5.516 9.163c-.409-.418-.436-1.17 0-1.615z"/></svg></div>;
+  const selectArrow = <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 pointer-events-none"><svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.516 7.548c.436-.446 1.043-.48 1.576 0L10 10.405l2.908-2.857c.533-.48 1.14-.446 1.576 0 .436.445.408 1.197 0 1.615l-3.734 3.704c-.533.529-1.394.529-1.928 0L5.516 9.163c-.409-.418-.436-1.17 0-1.615z" /></svg></div>;
 
   return (
     <div className={modalBackdropClasses} onClick={e => e.target === e.currentTarget && setShowModal(false)}>
@@ -247,7 +262,7 @@ const TransactionModal = ({ showModal, setShowModal, transactionType, setTransac
               <button key={t} className={`px-4 lg:px-6 py-2 cursor-pointer text-sm ${transactionType === t ? 'bg-gray-200 font-medium' : 'bg-gray-50 hover:bg-gray-100'}`} onClick={() => setTransactionType(t)}>{t}</button>
             ))}
           </div>
-          
+
           <div className="space-y-4 mb-6">
             <FormField label="Valor">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">R$</span>
@@ -255,11 +270,24 @@ const TransactionModal = ({ showModal, setShowModal, transactionType, setTransac
             </FormField>
             <FormField label="Data">
               <input type="date" name="date" value={transactionData.date} onChange={handleTransactionChange} className={inputClasses} />
-            </FormField>
-            <FormField label="Categoria">
+            </FormField>            <FormField label="Categoria">
               <select name="category" value={transactionData.category} onChange={handleTransactionChange} className={`${inputClasses} appearance-none bg-white`} defaultValue="">
                 <option value="" disabled>Selecione</option>
                 {categories.map(category => <option key={category.id} value={category.name}>{category.name}</option>)}
+              </select>
+              {selectArrow}
+            </FormField>
+            <FormField label="Meta Associada (Opcional)">
+              <select 
+                name="meta_id" 
+                value={transactionData.meta_id || ''} 
+                onChange={handleTransactionChange} 
+                className={`${inputClasses} appearance-none bg-white`}
+              >
+                <option value="">Nenhuma meta</option>
+                {metas.map(meta => (
+                  <option key={meta.id} value={meta.id}>{meta.name}</option>
+                ))}
               </select>
               {selectArrow}
             </FormField>
@@ -267,8 +295,8 @@ const TransactionModal = ({ showModal, setShowModal, transactionType, setTransac
               <input type="text" name="description" value={transactionData.description} onChange={handleTransactionChange} maxLength={30} className={inputClasses} placeholder="(Máx 30 caracteres)" />
             </FormField>
           </div>
-            <button 
-            className={`${primaryBtnClasses} w-full py-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`} 
+          <button
+            className={`${primaryBtnClasses} w-full py-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={handleSaveTransaction}
             disabled={isLoading}
           >
@@ -289,12 +317,12 @@ const CategoriesModal = ({ showCategoriesModal, setShowCategoriesModal, categori
 
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
-      try {
+    try {
       await api.createCategoria({
         name: newCategoryName.trim(),
         type: 'Despesa'
       });
-      
+
       setNewCategoryName('');
       if (onCategoriesChanged) {
         onCategoriesChanged();
@@ -307,12 +335,12 @@ const CategoriesModal = ({ showCategoriesModal, setShowCategoriesModal, categori
 
   const handleSaveEdit = async () => {
     if (!editingCategory?.name.trim()) return;
-      try {
+    try {
       await api.updateCategoria(editingCategory.id, {
         name: editingCategory.name.trim(),
         type: editingCategory.type || 'Despesa'
       });
-      
+
       setEditingCategory(null);
       if (onCategoriesChanged) {
         onCategoriesChanged();
@@ -322,9 +350,10 @@ const CategoriesModal = ({ showCategoriesModal, setShowCategoriesModal, categori
       alert('Erro ao atualizar categoria. Tente novamente.');
     }
   };
-    const confirmDelete = async () => {    try {
+  const confirmDelete = async () => {
+    try {
       await api.deleteCategoria(deletingId);
-      
+
       setDeletingId(null);
       if (onCategoriesChanged) {
         onCategoriesChanged();
@@ -415,19 +444,28 @@ const FinanceApp = ({ user, onLogout }) => {
   const [showModal, setShowModal] = useState(false);
   const [showCategoriesModal, setShowCategoriesModal] = useState(false);
   const [transactionType, setTransactionType] = useState('Receita');
-  const [transactionData, setTransactionData] = useState({ valor: '0,00', date: '', description: '', category: '' });  const [categories, setCategories] = useState([]);
+  const [transactionData, setTransactionData] = useState({ valor: '0,00', date: '', description: '', category: '', meta_id: null });
+  const [categories, setCategories] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [metas, setMetas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dashboardSummary, setDashboardSummary] = useState(null);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
 
   useEffect(() => {
     const loadInitialData = async () => {
       try {
         setLoading(true);
-        const [categoriesData, transactionsData, metasData] = await Promise.all([
+        setLoadingDashboard(true);
+
+        const [categoriesData, transactionsData, metasData, dashboardData] = await Promise.all([
           api.getCategorias(),
           api.getTransacoes(),
-          api.getMetas()
+          api.getMetas(),
+          api.getDashboardSummary().catch(err => {
+            console.error('Erro ao carregar resumo do dashboard:', err);
+            return null;
+          })
         ]);
         const mappedCategories = categoriesData.map(cat => ({
           id: cat.idCategoria,
@@ -435,7 +473,7 @@ const FinanceApp = ({ user, onLogout }) => {
           type: cat.tipo,
           usedIn: [] // TODO: Implementar lógica de uso quando necessário
         }));
-          const mappedTransactions = transactionsData.map(trans => ({
+        const mappedTransactions = transactionsData.map(trans => ({
           id: trans.idMovimentacao,
           valor: trans.valor,
           date: trans.data_movimentacao,
@@ -443,7 +481,7 @@ const FinanceApp = ({ user, onLogout }) => {
           type: trans.tipo,
           categoryId: trans.categoria_id,
           categoryName: categoriesData.find(cat => cat.idCategoria === trans.categoria_id)?.nome || 'Sem categoria'
-        }));        const mappedMetas = metasData.map(meta => ({
+        })); const mappedMetas = metasData.map(meta => ({
           id: meta.idMeta,
           name: meta.nome,
           target: meta.valor_objetivo,
@@ -453,9 +491,11 @@ const FinanceApp = ({ user, onLogout }) => {
           categoryId: null,
           categoryName: 'Geral'
         }));
-          setCategories(mappedCategories);
+
+        setCategories(mappedCategories);
         setTransactions(mappedTransactions);
         setMetas(mappedMetas);
+        setDashboardSummary(dashboardData);
       } catch (err) {
         console.error('Erro ao carregar dados:', err);
         if (err.response?.status === 401) {
@@ -464,19 +504,36 @@ const FinanceApp = ({ user, onLogout }) => {
           onLogout();
           return;
         }
-        
+
         alert('Erro ao carregar dados. Tente novamente.');
       } finally {
         setLoading(false);
+        setLoadingDashboard(false);
       }
-    };    loadInitialData();
+    }; loadInitialData();
   }, [onLogout]);
   const handleValorChange = e => setTransactionData(prev => ({ ...prev, valor: formatCurrency(e.target.value) }));
-  const handleTransactionChange = ({ target: { name, value } }) => setTransactionData(prev => ({ ...prev, [name]: value }));
-  const handleCloseModal = () => {
+  const handleTransactionChange = ({ target: { name, value } }) => setTransactionData(prev => ({ ...prev, [name]: value }));  const handleCloseModal = () => {
     setShowModal(false);
-    setTransactionData({ valor: '0,00', date: '', description: '', category: '' });
+    setTransactionData({ valor: '0,00', date: '', description: '', category: '', meta_id: null });
   };
+  const reloadAllData = async () => {
+    try {
+      await reloadTransactions();
+      
+      await reloadMetas();
+      
+      try {
+        const dashboardData = await api.getDashboardSummary();
+        setDashboardSummary(dashboardData);
+      } catch (err) {
+        console.error('Erro ao recarregar resumo do dashboard:', err);
+      }
+    } catch (err) {
+      console.error('Erro ao recarregar dados:', err);
+    }
+  };
+
   const reloadTransactions = async () => {
     try {
       const transactionsData = await api.getTransacoes();
@@ -493,7 +550,7 @@ const FinanceApp = ({ user, onLogout }) => {
     } catch (err) {
       console.error('Erro ao recarregar transações:', err);
     }
-  };  const reloadCategories = async () => {
+  }; const reloadCategories = async () => {
     try {
       const categoriesData = await api.getCategorias();
       const mappedCategories = categoriesData.map(cat => ({
@@ -529,34 +586,35 @@ const FinanceApp = ({ user, onLogout }) => {
 
   const isModalOpen = showModal || showCategoriesModal;
   const renderContent = () => {
-  switch (currentView) {
-    case 'reports':
-      return <ReportsScreen />;
-    case 'goals':
-      return <GoalsScreen onMetasChanged={reloadMetas} />;
-    case 'budgets':
-      return <BudgetsScreen categories={categories}/>;    case 'overview':
-    default:
-      return (
-        <OverviewContent
-          user={user}
-          currentMonth={currentMonth}
-          setCurrentMonth={setCurrentMonth}
-          setShowModal={setShowModal}
-          categories={categories}
-          transactions={transactions}
-          metas={metas}
-          loading={loading}
-        />
-      );
-  }
-};
+    switch (currentView) {
+      case 'reports':
+        return <ReportsScreen />;
+      case 'goals':
+        return <GoalsScreen onMetasChanged={reloadMetas} />;
+      case 'budgets':
+        return <BudgetsScreen categories={categories} />; case 'overview':
+      default:
+        return (
+          <OverviewContent
+            user={user}
+            currentMonth={currentMonth}
+            setCurrentMonth={setCurrentMonth}
+            setShowModal={setShowModal}
+            categories={categories}
+            transactions={transactions}
+            metas={metas}
+            loading={loading}
+            dashboardSummary={dashboardSummary}
+            loadingDashboard={loadingDashboard}
+          />
+        );
+    }
+  };
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-gray-50 overflow-hidden">
-      {/* Overlay para fechar a sidebar em telas menores */}
       {sidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-20 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
-      
+
       <Sidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
@@ -568,16 +626,13 @@ const FinanceApp = ({ user, onLogout }) => {
         setShowCategoriesModal={setShowCategoriesModal}
       />
       
-      {/* Área de conteúdo principal, que fica com blur quando um modal está aberto */}
       <div className={`flex-1 flex flex-col overflow-hidden transition-filter duration-300 ${isModalOpen ? 'filter blur-sm pointer-events-none' : ''}`}>
         <div className="lg:hidden flex justify-between items-center px-4 py-3 bg-white border-b border-gray-200">
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-md text-gray-500"><Menu size={24} /></button>
           <div className="font-bold text-lg">Finanzen</div>
         </div>
         {renderContent()}
-      </div>
-        {/* Modais são renderizados fora da área de conteúdo principal para não serem afetados pelo blur */}
-      <TransactionModal
+      </div>      <TransactionModal
         showModal={showModal}
         setShowModal={handleCloseModal}
         transactionType={transactionType}
@@ -586,8 +641,10 @@ const FinanceApp = ({ user, onLogout }) => {
         handleValorChange={handleValorChange}
         handleTransactionChange={handleTransactionChange}
         categories={categories}
-        onTransactionSaved={reloadTransactions}
-      />      <CategoriesModal
+        metas={metas}
+        onTransactionSaved={reloadAllData}
+      />
+      <CategoriesModal
         showCategoriesModal={showCategoriesModal}
         setShowCategoriesModal={setShowCategoriesModal}
         categories={categories}

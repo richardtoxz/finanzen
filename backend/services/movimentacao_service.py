@@ -22,7 +22,6 @@ class MovimentacaoService:
                 detail="Categoria não encontrada ou não pertence ao usuário."
             )
         
-        # Validar se a meta pertence ao usuário (se fornecida)
         if movimentacao_data.meta_id is not None:
             if not get_meta_by_id(db, movimentacao_data.meta_id, usuario_id):
                 raise HTTPException(
@@ -76,7 +75,6 @@ class MovimentacaoService:
                     detail="Categoria não encontrada ou não pertence ao usuário."
                 )
         
-        # Validar se a meta pertence ao usuário (se fornecida)
         if movimentacao_data.meta_id is not None:
             if not get_meta_by_id(db, movimentacao_data.meta_id, usuario_id):
                 raise HTTPException(

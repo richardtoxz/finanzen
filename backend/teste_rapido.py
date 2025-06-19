@@ -5,7 +5,6 @@ from datetime import datetime
 BASE_URL = "http://localhost:8000"
 HEADERS = {"Content-Type": "application/json"}
 
-# Gerar timestamp para emails únicos
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 email_a = f"testa_{timestamp}@test.com"
 email_b = f"testb_{timestamp}@test.com"
@@ -13,7 +12,6 @@ email_b = f"testb_{timestamp}@test.com"
 print("🧪 TESTE DE INTEGRAÇÃO RÁPIDO - API FINANZEN")
 print("=" * 50)
 
-# 1. Cadastro Usuário A
 print(f"\n1. Cadastrando Usuário A ({email_a})...")
 usuario_a = {
     "nomeUsuario": "Test User A",
@@ -31,7 +29,6 @@ else:
     print(f"❌ Erro: {resp.text}")
     exit()
 
-# 2. Verificação Usuário A
 print("\n2. Verificando email Usuário A...")
 verify_a = {
     "email": email_a,
@@ -48,10 +45,8 @@ else:
     print(f"❌ Erro: {resp.text}")
     exit()
 
-# 3. Autenticação Usuário A
 auth_a = {**HEADERS, "Authorization": f"Bearer {user_a_id}"}
 
-# 4. Criar categoria
 print("\n3. Criando categoria para Usuário A...")
 categoria = {
     "nome": "Salário",
@@ -68,7 +63,6 @@ else:
     print(f"❌ Erro: {resp.text}")
     exit()
 
-# 5. Criar meta
 print("\n4. Criando meta para Usuário A...")
 meta = {
     "nome": "Comprar Notebook",
@@ -85,7 +79,6 @@ else:
     print(f"❌ Erro: {resp.text}")
     exit()
 
-# 6. Criar transação vinculada à meta
 print("\n5. Criando transação vinculada à meta...")
 transacao = {
     "tipo": "receita",
@@ -105,7 +98,6 @@ else:
     print(f"❌ Erro: {resp.text}")
     exit()
 
-# 7. Verificar progresso da meta
 print("\n6. Verificando progresso da meta...")
 resp = requests.get(f"{BASE_URL}/metas/{meta_id}", headers=auth_a)
 print(f"Status: {resp.status_code}")
@@ -127,7 +119,6 @@ if resp.status_code == 200:
 else:
     print(f"❌ Erro: {resp.text}")
 
-# 8. Teste de segurança - Usuário B
 print("\n7. Teste de Segurança - Cadastrando Usuário B...")
 usuario_b = {
     "nomeUsuario": "Test User B",
@@ -151,13 +142,12 @@ if resp.status_code == 201:
         user_b_id = user_b["idUsuario"]
         print(f"✅ Usuário B criado. ID: {user_b_id}")
         
-        # Tentar usar categoria do Usuário A
         auth_b = {**HEADERS, "Authorization": f"Bearer {user_b_id}"}
         transacao_invasiva = {
             "tipo": "despesa",
             "valor": 50.00,
             "data_movimentacao": "2025-06-13",
-            "categoria_id": cat_id,  # Categoria do Usuário A!
+            "categoria_id": cat_id,  
             "descricao": "Tentativa invasiva"
         }
         

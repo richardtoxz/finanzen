@@ -2,7 +2,6 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Tenta carregar .env da pasta core (desenvolvimento local)
 env_path = Path(__file__).parent.resolve() / '.env'
 if env_path.exists():
     print(f"Carregando variáveis de .env: {env_path}")
@@ -15,7 +14,6 @@ class Settings:
     PROJECT_DESCRIPTION: str = "Finanzen API Backend Service"
     PROJECT_VERSION: str = "1.0.0"
     
-    # Definindo variáveis de ambiente com valores padrão para desenvolvimento
     DATABASE_URL: str = os.getenv("DATABASE_URL")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "chave_secreta_desenvolvimento_nao_usar_em_producao")
     
