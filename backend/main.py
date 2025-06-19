@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
 from database import engine, Base
-from controllers import auth_controller, categoria_controller, movimentacao_controller, meta_controller
+from controllers import auth_controller, categoria_controller, movimentacao_controller, meta_controller, orcamentos_controller
 from core.config import settings
 import logging
 
@@ -41,6 +41,7 @@ app.include_router(auth_controller.router)
 app.include_router(categoria_controller.router)
 app.include_router(movimentacao_controller.router)
 app.include_router(meta_controller.router)
+app.include_router(orcamentos_controller.router)
 
 @app.get("/", tags=["Root"])
 async def read_root():

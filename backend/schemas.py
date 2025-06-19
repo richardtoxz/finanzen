@@ -118,7 +118,6 @@ class MovimentacaoResponseSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-# Schemas para Metas Financeiras
 class MetaCreateSchema(BaseModel):
     nome: str = Field(..., min_length=1, max_length=150)
     valor_objetivo: Decimal = Field(..., gt=0, decimal_places=2)
@@ -141,5 +140,32 @@ class MetaResponseSchema(BaseModel):
     usuario_id: int
     valor_atual: Decimal
     progresso_percentual: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+class OrcamentoCreateSchema(BaseModel):
+    nome: str = Field(..., min_length=1, max_length=150)
+    valor_orcado: Decimal = Field(..., gt=0, decimal_places=2)
+    data_inicio: date
+    data_fim: date
+    categoria_id: Optional[int] = Field(None, gt=0)
+
+class OrcamentoUpdateSchema(BaseModel):
+    nome: Optional[str] = Field(None, min_length=1, max_length=150)
+    valor_orcado: Optional[Decimal] = Field(None, gt=0, decimal_places=2)
+    data_inicio: Optional[date] = None
+    data_fim: Optional[date] = None
+    categoria_id: Optional[int] = Field(None, gt=0)
+
+class OrcamentoResponseSchema(BaseModel):
+    idOrcamento: int
+    nome: str
+    valor_orcado: Decimal
+    valor_gasto: Decimal
+    data_inicio: date
+    data_fim: date
+    usuario_id: int
+    categoria_id: Optional[int] = None
+    categoria: Optional[CategoriaSimpleResponseSchema] = None
 
     model_config = ConfigDict(from_attributes=True)

@@ -1,7 +1,6 @@
-// TODO: Conectar à API quando os endpoints de Orçamentos forem implementados
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Edit2, Trash2, X, Plus } from 'lucide-react';
-import CurrencyInput from 'react-currency-input-field';
+import { api } from '../services/api';
 
 const BudgetModal = ({ 
   showNewBudgetModal, 
@@ -37,15 +36,20 @@ const BudgetModal = ({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Categoria *
               </label>
-              <div className="relative">
-                <select
+              <div className="relative">                <select
                   value={budgetForm.category}
-                  onChange={(e) => setBudgetForm({ ...budgetForm, category: e.target.value })}
+                  onChange={(e) => {
+                    const selectedCategory = categories?.find(cat => cat.name === e.target.value);
+                    setBudgetForm({ 
+                      ...budgetForm, 
+                      category: e.target.value,
+                      categoryId: selectedCategory?.id || null
+                    });
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-200 focus:border-gray-400 appearance-none bg-white"
                   disabled={editingBudget}
                 >
-                  <option value="">Selecione uma categoria</option>
-                  {categories?.map(cat => (
+                  <option value="">Selecione uma categoria</option>                  {categories?.map(cat => (
                     <option key={cat.id} value={cat.name}>{cat.name}</option>
                   ))}
                 </select>
@@ -99,45 +103,57 @@ const BudgetModal = ({
 
 
 const BudgetsScreen = ({ categories }) => {
-  const [budgets, setBudgets] = useState([
-    {
-      id: 1,
-      category: 'Alimentação',
-      spent: 400.00,
-      budget: 600.00,
-      color: '#3B82F6'
-    },
-    {
-      id: 2,
-      category: 'Lazer',
-      spent: 150.00,
-      budget: 400.00,
-      color: '#10B981'
-    },
-    {
-      id: 3,
-      category: 'Compras',
-      spent: 300.00,
-      budget: 450.00,
-      color: '#F59E0B'
-    },
-    {
-      id: 4,
-      category: 'Transporte',
-      spent: 150.00,
-      budget: 300.00,
-      color: '#8B5CF6'
-    }
-  ]);
-
+  const [budgets, setBudgets] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState('Mês atual');
   const [showNewBudgetModal, setShowNewBudgetModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [budgetForm, setBudgetForm] = useState({
     category: '',
-    budget: ''
+    budget: '',
+    categoryId: null,
+    data_inicio: '',
+    data_fim: ''
   });
+
+  useEffect(() => {
+    const loadBudgets = async () => {
+      try {
+        setLoading(true);
+        const orcamentosData = await api.getOrcamentos();
+        
+        const mappedBudgets = orcamentosData.map((orcamento, index) => {
+          const colors = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#06B6D4'];
+          return {
+            id: orcamento.idOrcamento,
+            category: orcamento.categoria?.nome || orcamento.nome,
+            categoryId: orcamento.categoria_id,
+            spent: parseFloat(orcamento.valor_gasto),
+            budget: parseFloat(orcamento.valor_orcado),
+            data_inicio: orcamento.data_inicio,
+            data_fim: orcamento.data_fim,
+            color: colors[index % colors.length]
+          };
+        });
+        
+        setBudgets(mappedBudgets);
+      } catch (err) {
+        console.error('Erro ao carregar orçamentos:', err);
+        if (err.response?.status === 401) {
+          alert('Sessão expirada. Você será redirecionado para o login.');
+          api.logout();
+          window.location.reload();
+        } else {
+          alert('Erro ao carregar orçamentos. Tente novamente.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBudgets();
+  }, []);
 
   const calculatePercentage = (spent, budget) => {
     return Math.min((spent / budget) * 100, 100);
@@ -150,55 +166,122 @@ const BudgetsScreen = ({ categories }) => {
     }).format(value);
   };
 
-  const handleAddBudget = () => {
+  const getCurrentPeriod = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    
+    const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const endDate = `${year}-${month.toString().padStart(2, '0')}-${lastDay}`;
+    
+    return { startDate, endDate };
+  };
+
+  const handleAddBudget = async () => {
     if (!budgetForm.category || !budgetForm.budget) return;
 
-    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#06B6D4'];
-    const newBudgetItem = {
-      id: Date.now(),
-      category: budgetForm.category,
-      spent: 0,
-      budget: parseFloat(budgetForm.budget.replace(',', '.')),
-      color: colors[budgets.length % colors.length]
-    };
+    try {
+      const selectedCategory = categories?.find(cat => cat.name === budgetForm.category);
+      const { startDate, endDate } = getCurrentPeriod();
+      
+      const orcamentoData = {
+        nome: `Orçamento ${budgetForm.category}`,
+        valor_orcado: budgetForm.budget,
+        data_inicio: startDate,
+        data_fim: endDate,
+        categoria_id: selectedCategory?.id || null
+      };
 
-    setBudgets([...budgets, newBudgetItem]);
-    setBudgetForm({ category: '', budget: '' });
-    setShowNewBudgetModal(false);
+      const newOrcamento = await api.createOrcamento(orcamentoData);
+      
+      const colors = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#06B6D4'];
+      const newBudgetItem = {
+        id: newOrcamento.idOrcamento,
+        category: budgetForm.category,
+        categoryId: selectedCategory?.id || null,
+        spent: parseFloat(newOrcamento.valor_gasto),
+        budget: parseFloat(newOrcamento.valor_orcado),
+        data_inicio: newOrcamento.data_inicio,
+        data_fim: newOrcamento.data_fim,
+        color: colors[budgets.length % colors.length]
+      };
+
+      setBudgets([...budgets, newBudgetItem]);
+      setBudgetForm({ category: '', budget: '', categoryId: null, data_inicio: '', data_fim: '' });
+      setShowNewBudgetModal(false);
+      
+      alert('Orçamento criado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao criar orçamento:', error);
+      alert('Erro ao criar orçamento. Tente novamente.');
+    }
   };
 
   const handleEditBudget = (budget) => {
     setEditingBudget(budget);
     setBudgetForm({
       category: budget.category,
-      budget: budget.budget.toString().replace('.', ',')
+      budget: budget.budget.toString().replace('.', ','),
+      categoryId: budget.categoryId,
+      data_inicio: budget.data_inicio,
+      data_fim: budget.data_fim
     });
     setShowNewBudgetModal(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!budgetForm.category || !budgetForm.budget) return;
 
-    setBudgets(budgets.map(b =>
-      b.id === editingBudget.id
-        ? { ...b, category: budgetForm.category, budget: parseFloat(budgetForm.budget.replace(',', '.')) }
-        : b
-    ));
+    try {
+      const selectedCategory = categories?.find(cat => cat.name === budgetForm.category);
+      
+      const updateData = {
+        nome: `Orçamento ${budgetForm.category}`,
+        valor_orcado: budgetForm.budget,
+        categoria_id: selectedCategory?.id || null
+      };
 
-    setEditingBudget(null);
-    setBudgetForm({ category: '', budget: '' });
-    setShowNewBudgetModal(false);
+      await api.updateOrcamento(editingBudget.id, updateData);
+
+      setBudgets(budgets.map(b =>
+        b.id === editingBudget.id
+          ? { 
+              ...b, 
+              category: budgetForm.category,
+              budget: parseFloat(budgetForm.budget.replace(',', '.')),
+              categoryId: selectedCategory?.id || null
+            }
+          : b
+      ));
+
+      setEditingBudget(null);
+      setBudgetForm({ category: '', budget: '', categoryId: null, data_inicio: '', data_fim: '' });
+      setShowNewBudgetModal(false);
+      
+      alert('Orçamento atualizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao atualizar orçamento:', error);
+      alert('Erro ao atualizar orçamento. Tente novamente.');
+    }
   };
 
-  const confirmDelete = () => {
-    setBudgets(budgets.filter(budget => budget.id !== deletingId));
-    setDeletingId(null);
+  const confirmDelete = async () => {
+    try {
+      await api.deleteOrcamento(deletingId);
+      setBudgets(budgets.filter(budget => budget.id !== deletingId));
+      setDeletingId(null);
+      alert('Orçamento excluído com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir orçamento:', error);
+      alert('Erro ao excluir orçamento. Tente novamente.');
+    }
   };
 
   const handleCloseModal = () => {
     setShowNewBudgetModal(false);
     setEditingBudget(null);
-    setBudgetForm({ category: '', budget: '' });
+    setBudgetForm({ category: '', budget: '', categoryId: null, data_inicio: '', data_fim: '' });
   };
   const formatBudgetValue = (value) => {
     const numericValue = value.replace(/[^\d,]/g, '');
@@ -279,7 +362,6 @@ const BudgetsScreen = ({ categories }) => {
             <span>Orçamento: <strong>{formatCurrency(budget.budget)}</strong></span>
           </div>
 
-          {/* Barra de progresso */}
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="h-2 rounded-full transition-all duration-500"
@@ -295,7 +377,6 @@ const BudgetsScreen = ({ categories }) => {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Alert de exclusão */}
       {deletingId && (
         <DeleteAlert
           onConfirm={confirmDelete}
@@ -303,7 +384,6 @@ const BudgetsScreen = ({ categories }) => {
         />
       )}
 
-      {/* Header */}
       <header className="border-b border-gray-200 p-4 flex flex-col lg:flex-row justify-between items-center bg-gray-0">
         <div className="flex space-x-2 lg:space-x-4 overflow-x-auto w-full lg:w-auto py-2 scrollbar-hide">
           {['Mês atual', 'Mês anterior', 'Ano'].map(month => (
@@ -327,33 +407,39 @@ const BudgetsScreen = ({ categories }) => {
         </button>
       </header>
 
-      {/* Título da seção */}
       <div className="p-4 lg:p-6 bg-gray-00 border-gray-200 text-center">
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Seus Orçamentos</h1>
         <p className="text-gray-600 mt-1">Quanto você quer gastar em cada categoria</p>
-      </div>
-
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-50">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {budgets.map(budget => (
-            <BudgetCard key={budget.id} budget={budget} />
-          ))}
-        </div>
-
-        {budgets.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">Nenhum orçamento criado ainda</p>
-            <button
-              onClick={() => setShowNewBudgetModal(true)}
-              className="mt-4 bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800"
-            >
-              Criar Primeiro Orçamento
-            </button>
+      </div>      <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-gray-50">
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+              <p className="text-gray-600">Carregando orçamentos...</p>
+            </div>
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {budgets.map(budget => (
+                <BudgetCard key={budget.id} budget={budget} />
+              ))}
+            </div>
+
+            {budgets.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">Nenhum orçamento criado ainda</p>
+                <button
+                  onClick={() => setShowNewBudgetModal(true)}
+                  className="mt-4 bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800"
+                >
+                  Criar Primeiro Orçamento
+                </button>
+              </div>
+            )}
+          </>
         )}
-      </main>      {/* Modal */}
+      </main>
       <BudgetModal 
         showNewBudgetModal={showNewBudgetModal}
         editingBudget={editingBudget}

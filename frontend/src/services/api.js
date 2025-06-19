@@ -243,6 +243,51 @@ export const api = {
         return authenticatedFetch(`${API_URL}/metas/${id}`, {
             method: 'DELETE'
         });
+    },
+
+    async getOrcamentos(filtros = {}) {
+        const params = new URLSearchParams();
+        
+        if (filtros.data_inicio) params.append('data_inicio', filtros.data_inicio);
+        if (filtros.data_fim) params.append('data_fim', filtros.data_fim);
+        if (filtros.categoria_id) params.append('categoria_id', filtros.categoria_id);
+
+        const queryString = params.toString();
+        const url = queryString ? `${API_URL}/orcamentos?${queryString}` : `${API_URL}/orcamentos`;
+
+        return authenticatedFetch(url);
+    },
+
+    async createOrcamento(data) {
+        return authenticatedFetch(`${API_URL}/orcamentos`, {
+            method: 'POST',
+            body: JSON.stringify({
+                nome: sanitizeInput(data.nome),
+                valor_orcado: parseFloat(data.valor_orcado.toString().replace(/[R$\s.]/g, '').replace(',', '.')),
+                data_inicio: sanitizeInput(data.data_inicio),
+                data_fim: sanitizeInput(data.data_fim),
+                categoria_id: data.categoria_id ? parseInt(data.categoria_id) : null
+            })
+        });
+    },
+
+    async updateOrcamento(id, data) {
+        return authenticatedFetch(`${API_URL}/orcamentos/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                nome: sanitizeInput(data.nome),
+                valor_orcado: data.valor_orcado ? parseFloat(data.valor_orcado.toString().replace(/[R$\s.]/g, '').replace(',', '.')) : undefined,
+                data_inicio: data.data_inicio ? sanitizeInput(data.data_inicio) : undefined,
+                data_fim: data.data_fim ? sanitizeInput(data.data_fim) : undefined,
+                categoria_id: data.categoria_id ? parseInt(data.categoria_id) : null
+            })
+        });
+    },
+
+    async deleteOrcamento(id) {
+        return authenticatedFetch(`${API_URL}/orcamentos/${id}`, {
+            method: 'DELETE'
+        });
     }
 };
 
