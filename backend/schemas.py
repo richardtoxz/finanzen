@@ -170,13 +170,11 @@ class OrcamentoResponseSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-# Dashboard Summary Schema
 class DashboardSummarySchema(BaseModel):
     saldo_atual: float
     total_receitas: float  
     total_despesas: float
 
-# Reports Schemas
 class PieChartDataSchema(BaseModel):
     name: str
     value: float
@@ -197,7 +195,6 @@ class ReportsDataSchema(BaseModel):
     barChartData: List[BarChartDataSchema]
     summaryData: SummaryDataSchema
 
-# Perfil do Usuário Schemas
 class UserProfileResponseSchema(BaseModel):
     """Schema para resposta com dados do perfil do usuário"""
     idUsuario: int
@@ -208,9 +205,8 @@ class UserProfileResponseSchema(BaseModel):
     is_verified: bool
 
 class UserProfileUpdateSchema(BaseModel):
-    """Schema para atualização parcial do perfil do usuário"""
+    """Schema para atualização parcial do perfil do usuário (sem email)"""
     nomeUsuario: Optional[str] = Field(None, min_length=2, max_length=150)
-    email: Optional[EmailStr] = None
     objetivoPreferencias: Optional[str] = Field(None, max_length=100)
     rendaMensalPreferencias: Optional[str] = Field(None, max_length=50)
 
@@ -235,3 +231,17 @@ class UserPasswordUpdateSchema(BaseModel):
         if not re.search(r"[!\"#$%&'()*+,\-./:;<=>?@\[\\\]^_`{|}~]", value):
             raise ValueError('Nova senha deve conter pelo menos um caractere especial válido.')  
         return value
+
+class EmailChangeRequestSchema(BaseModel):
+    """Schema para solicitar alteração de email"""
+    novo_email: EmailStr
+
+class EmailChangeRequestResponseSchema(BaseModel):
+    """Schema de resposta para solicitação de alteração de email"""
+    message: str
+    verification_code_for_testing: Optional[str] = None
+
+class EmailChangeConfirmSchema(BaseModel):
+    """Schema para confirmar alteração de email"""
+    novo_email: EmailStr
+    codigo_verificacao: str = Field(..., min_length=6, max_length=6)

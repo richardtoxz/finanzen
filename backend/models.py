@@ -53,6 +53,7 @@ class VerificacoesEmail(Base):
     criado_emVerificacao = Column(TIMESTAMP, server_default=func.now())
     expiracao_emVerificacao = Column(TIMESTAMP, nullable=False)
     usado = Column(Boolean, default=False, nullable=False)
+    usuario_id = Column(Integer, ForeignKey("usuario.idUsuario"), nullable=False)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
