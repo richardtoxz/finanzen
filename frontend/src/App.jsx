@@ -16,12 +16,6 @@ export default function App() {
       const storedUserId = localStorage.getItem('user_id');
       const storedUser = localStorage.getItem('user_data');
 
-      console.log('🔍 Verificando estado de autenticação:', {
-        hasUserId: !!storedUserId,
-        hasUserData: !!storedUser,
-        userId: storedUserId
-      });
-
       if (storedUserId && storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser);
@@ -33,7 +27,6 @@ export default function App() {
 
           setUser(parsedUser);
           setScreen('app');
-          console.log('🔄 Sessão restaurada para user_id:', storedUserId);
         } catch (error) {
           console.error('❌ Erro ao restaurar sessão:', error);
           api.logout();
@@ -64,7 +57,6 @@ export default function App() {
 
         setUser(response.user);
         setScreen('app');
-        console.log('✅ Login realizado e dados persistidos para:', response.user.email);
       } catch (error) {
         const errorMessage = error.message || 'Erro ao fazer login';
         alert(errorMessage);
@@ -88,7 +80,6 @@ export default function App() {
 
         if (response.idUsuario) {
           localStorage.setItem('user_id', response.idUsuario.toString());
-          console.log('✅ user_id definido após verificação:', response.idUsuario);
         }
 
         setUser(response);
@@ -104,7 +95,6 @@ export default function App() {
 
       if (updatedUser.idUsuario && !localStorage.getItem('user_id')) {
         localStorage.setItem('user_id', updatedUser.idUsuario.toString());
-        console.log('✅ user_id mantido após onboarding:', updatedUser.idUsuario);
       }
 
       setUser(updatedUser);
@@ -114,7 +104,6 @@ export default function App() {
       localStorage.removeItem('user_data');
       setUser(null);
       setScreen('login');
-      console.log('🚪 Logout realizado, todos os dados limpos');
     },
 
     switchToLogin: () => setScreen('login'),

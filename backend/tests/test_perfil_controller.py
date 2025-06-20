@@ -136,8 +136,36 @@ def test_update_user_profile_partial_update(client: TestClient, db_session: Sess
     assert data["objetivoPreferencias"] is None
     assert data["rendaMensalPreferencias"] is None
 
-def test_update_user_profile_email_already_exists(client: TestClient, db_session: Session):
-    """Teste para atualização de email que já existe"""
+def test_request_email_change_success(client: TestClient, db_session: Session):
+    """Teste para solicitar alteração de email com sucesso"""
+    # Criar usuário de teste
+    user_data = schemas.UserRegistrationSchema(
+        nomeUsuario="João Silva",
+        email="joao@test.com",
+        senha="TesteSenha@123"
+    )
+    
+    user = create_test_user_directly(db_session, user_data)
+    
+    # Solicitar alteração de email
+    email_request = {
+        "novo_email": "joao.novo@test.com"
+    }
+    
+    response = client.post(
+        "/perfil/solicitar-alteracao-email",
+        json=email_request,
+        headers={"Authorization": f"Bearer {user.idUsuario}"}
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert data["message"] == "Código de verificação para o novo e-mail gerado com sucesso."
+    assert "verification_code_for_testing" in data
+    assert len(data["verification_code_for_testing"]) == 6
+
+def test_request_email_change_already_exists(client: TestClient, db_session: Session):
+    """Teste para solicitar alteração para email já existente"""
     # Criar primeiro usuário
     user1_data = schemas.UserRegistrationSchema(
         nomeUsuario="Usuário 1",
@@ -154,19 +182,95 @@ def test_update_user_profile_email_already_exists(client: TestClient, db_session
     )
     user2 = create_test_user_directly(db_session, user2_data)
     
-    # Tentar atualizar o email do usuário 2 para o email do usuário 1
-    update_data = {
-        "email": "user1@test.com"
+    # Tentar alterar email do usuário 2 para o email do usuário 1
+    email_request = {
+        "novo_email": "user1@test.com"
     }
     
-    response = client.put(
-        "/perfil/",
-        json=update_data,
+    response = client.post(
+        "/perfil/solicitar-alteracao-email",
+        json=email_request,
         headers={"Authorization": f"Bearer {user2.idUsuario}"}
     )
     
     assert response.status_code == 400
-    assert "já está sendo utilizado" in response.json()["detail"]
+    assert "já está em uso" in response.json()["detail"]
+
+def test_confirm_email_change_success(client: TestClient, db_session: Session):
+    """Teste para confirmar alteração de email com sucesso"""
+    # Criar usuário de teste
+    user_data = schemas.UserRegistrationSchema(
+        nomeUsuario="Maria Silva",
+        email="maria@test.com",
+        senha="TesteSenha@123"
+    )
+    
+    user = create_test_user_directly(db_session, user_data)
+    
+    # Primeiro, solicitar alteração de email
+    email_request = {
+        "novo_email": "maria.novo@test.com"
+    }
+    
+    response = client.post(
+        "/perfil/solicitar-alteracao-email",
+        json=email_request,
+        headers={"Authorization": f"Bearer {user.idUsuario}"}
+    )
+    
+    assert response.status_code == 200
+    verification_code = response.json()["verification_code_for_testing"]
+    
+    # Confirmar alteração com código válido
+    email_confirm = {
+        "novo_email": "maria.novo@test.com",
+        "codigo_verificacao": verification_code
+    }
+    
+    response = client.put(
+        "/perfil/confirmar-alteracao-email",
+        json=email_confirm,
+        headers={"Authorization": f"Bearer {user.idUsuario}"}
+    )
+    
+    assert response.status_code == 200
+    assert response.json()["message"] == "E-mail alterado com sucesso!"
+    
+    # Verificar se o email foi realmente alterado
+    response = client.get(
+        "/perfil/",
+        headers={"Authorization": f"Bearer {user.idUsuario}"}
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == "maria.novo@test.com"
+
+def test_confirm_email_change_invalid_code(client: TestClient, db_session: Session):
+    """Teste para confirmar alteração com código inválido"""
+    # Criar usuário de teste
+    user_data = schemas.UserRegistrationSchema(
+        nomeUsuario="Pedro Silva",
+        email="pedro@test.com",
+        senha="TesteSenha@123"
+    )
+    
+    user = create_test_user_directly(db_session, user_data)
+    
+    # Tentar confirmar com código inválido
+    email_confirm = {
+        "novo_email": "pedro.novo@test.com",
+        "codigo_verificacao": "000000"  # Código inválido
+    }
+    
+    response = client.put(
+        "/perfil/confirmar-alteracao-email",
+        json=email_confirm,
+        headers={"Authorization": f"Bearer {user.idUsuario}"}
+    )
+    
+    assert response.status_code == 400
+    assert "inválido ou expirado" in response.json()["detail"]
 
 def test_update_user_password_success(client: TestClient, db_session: Session):
     """Teste para alterar senha com sucesso"""
@@ -259,30 +363,4 @@ def test_unauthorized_access(client: TestClient):
     )
     assert response.status_code == 401
 
-def test_update_user_profile_with_email_success(client: TestClient, db_session: Session):
-    """Teste para atualizar email com sucesso"""
-    # Criar usuário de teste
-    user_data = schemas.UserRegistrationSchema(
-        nomeUsuario="Roberto Silva",
-        email="roberto@test.com",
-        senha="TesteSenha@123"
-    )
-    
-    user = create_test_user_directly(db_session, user_data)
-    
-    # Dados para atualização incluindo novo email
-    update_data = {
-        "nomeUsuario": "Roberto Silva Santos",
-        "email": "roberto.novo@test.com"
-    }
-    
-    response = client.put(
-        "/perfil/",
-        json=update_data,
-        headers={"Authorization": f"Bearer {user.idUsuario}"}
-    )
-    
-    assert response.status_code == 200
-    data = response.json()
-    assert data["nomeUsuario"] == "Roberto Silva Santos"
-    assert data["email"] == "roberto.novo@test.com"
+

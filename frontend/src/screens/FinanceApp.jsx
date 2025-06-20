@@ -9,6 +9,7 @@ import ReportsScreen from './ReportsScreen';
 import { formatCurrency } from '../utils/formatCurrency';
 import GoalsScreen from './GoalsScreen';
 import BudgetsScreen from './BudgetsScreen';
+import SettingsScreen from './SettingsScreen';
 
 
 const modalBackdropClasses = "fixed inset-0 backdrop-blur-sm bg-opacity-30 flex items-center justify-center z-50 p-4";
@@ -56,7 +57,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, setTransactionType, setShowModal
       <SidebarItem icon={<FileText size={18} />} text="Orçamentos" active={currentView === 'budgets'} onClick={() => setCurrentView('budgets')} />
       <SidebarItem icon={<BarChart3 size={18} />} text="Relatórios" active={currentView === 'reports'} onClick={() => setCurrentView('reports')} />
       <SidebarItem icon={<Layers size={18} />} text="Gerenciar Categorias" onClick={() => setShowCategoriesModal(true)} />
-      <SidebarItem icon={<Settings size={18} />} text="Configurações" />
+      <SidebarItem icon={<Settings size={18} />} text="Configurações" active={currentView === 'settings'} onClick={() => setCurrentView('settings')} /> 
     </nav>
     <SidebarItem icon={<LogOut size={18} />} text="Sair" className="mt-auto" onClick={onLogout} />
   </div>
@@ -550,7 +551,8 @@ const FinanceApp = ({ user, onLogout }) => {
     } catch (err) {
       console.error('Erro ao recarregar transações:', err);
     }
-  }; const reloadCategories = async () => {
+  };
+  const reloadCategories = async () => {
     try {
       const categoriesData = await api.getCategorias();
       const mappedCategories = categoriesData.map(cat => ({
@@ -585,14 +587,17 @@ const FinanceApp = ({ user, onLogout }) => {
   };
 
   const isModalOpen = showModal || showCategoriesModal;
-  const renderContent = () => {
+ const renderContent = () => {
     switch (currentView) {
       case 'reports':
         return <ReportsScreen />;
       case 'goals':
         return <GoalsScreen onMetasChanged={reloadMetas} />;
       case 'budgets':
-        return <BudgetsScreen categories={categories} />; case 'overview':
+        return <BudgetsScreen categories={categories} />;
+      case 'settings':
+        return <SettingsScreen user={user} />;
+      case 'overview':
       default:
         return (
           <OverviewContent
@@ -632,7 +637,8 @@ const FinanceApp = ({ user, onLogout }) => {
           <div className="font-bold text-lg">Finanzen</div>
         </div>
         {renderContent()}
-      </div>      <TransactionModal
+      </div>
+      <TransactionModal
         showModal={showModal}
         setShowModal={handleCloseModal}
         transactionType={transactionType}

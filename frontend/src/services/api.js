@@ -1,5 +1,4 @@
-// const API_URL = 'https://finanzen-production.up.railway.app';   descomente para produção
-const API_URL = 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const createApiError = (errorData, responseStatus, defaultMessage) => {
     const customError = new Error(defaultMessage || 'Ocorreu um erro na solicitação à API.');
@@ -183,7 +182,7 @@ export const api = {
         const url = queryString ? `${API_URL}/transacoes?${queryString}` : `${API_URL}/transacoes`;
 
         return authenticatedFetch(url);
-    },    async createTransacao(data) {
+    }, async createTransacao(data) {
         return authenticatedFetch(`${API_URL}/transacoes`, {
             method: 'POST',
             body: JSON.stringify({
@@ -195,7 +194,7 @@ export const api = {
                 meta_id: data.meta_id ? parseInt(data.meta_id) : null
             })
         });
-    },async updateTransacao(id, data) {
+    }, async updateTransacao(id, data) {
         return authenticatedFetch(`${API_URL}/transacoes/${id}`, {
             method: 'PUT',
             body: JSON.stringify({
@@ -293,13 +292,62 @@ export const api = {
 
     async getDashboardSummary() {
         return authenticatedFetch(`${API_URL}/transacoes/dashboard/summary`);
-    },
-
-    async getReportsData(periodo = 'mes_atual') {
+    },    async getReportsData(periodo = 'mes_atual') {
         const validPeriodos = ['mes_atual', 'mes_anterior', 'ano_atual'];
         const periodoSanitized = validPeriodos.includes(periodo) ? periodo : 'mes_atual';
         
         return authenticatedFetch(`${API_URL}/relatorios/dados?periodo=${periodoSanitized}`);
-    }
+    },
+
+    async getUserProfile() {
+        return authenticatedFetch(`${API_URL}/perfil`);
+    },    async updateUserProfile(profileData) {
+        const sanitizedData = {};
+        
+        if (profileData.nomeUsuario !== undefined) {
+            sanitizedData.nomeUsuario = sanitizeInput(profileData.nomeUsuario);
+        }
+        // Removido email - agora usa fluxo seguro de duas etapas
+        if (profileData.objetivoPreferencias !== undefined) {
+            sanitizedData.objetivoPreferencias = sanitizeInput(profileData.objetivoPreferencias);
+        }
+        if (profileData.rendaMensalPreferencias !== undefined) {
+            sanitizedData.rendaMensalPreferencias = sanitizeInput(profileData.rendaMensalPreferencias);
+        }
+
+        return authenticatedFetch(`${API_URL}/perfil`, {
+            method: 'PUT',
+            body: JSON.stringify(sanitizedData)
+        });
+    },
+
+    async updateUserPassword(passwordData) {
+        return authenticatedFetch(`${API_URL}/perfil/senha`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                senha_atual: sanitizeInput(passwordData.senha_atual),
+                nova_senha: sanitizeInput(passwordData.nova_senha)
+            })
+        });
+    },
+
+    async requestEmailChange(newEmail) {
+        return authenticatedFetch(`${API_URL}/perfil/solicitar-alteracao-email`, {
+            method: 'POST',
+            body: JSON.stringify({
+                novo_email: sanitizeInput(newEmail)
+            })
+        });
+    },
+
+    async confirmEmailChange(emailData) {
+        return authenticatedFetch(`${API_URL}/perfil/confirmar-alteracao-email`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                novo_email: sanitizeInput(emailData.novo_email),
+                codigo_verificacao: sanitizeInput(emailData.codigo_verificacao)
+            })
+        });
+    },
 };
 

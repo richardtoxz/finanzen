@@ -61,3 +61,29 @@ def update_user_password_endpoint(
     Requer a senha atual para validação antes de definir a nova senha.
     """
     return service.update_user_password(db, usuario_id, password_data)
+
+@router.post("/solicitar-alteracao-email", response_model=schemas.EmailChangeRequestResponseSchema)
+def request_email_change_endpoint(
+    email_request: schemas.EmailChangeRequestSchema,
+    db: Session = Depends(get_db),
+    usuario_id: int = Depends(get_current_user_id),
+    service: PerfilService = Depends(lambda: perfil_service_instance)
+):
+    """
+    Endpoint para solicitar alteração de email - primeira etapa.
+    Gera um código de verificação que deve ser usado para confirmar a alteração.
+    """
+    return service.request_email_change(db, usuario_id, email_request)
+
+@router.put("/confirmar-alteracao-email", response_model=Dict[str, str])
+def confirm_email_change_endpoint(
+    email_confirm: schemas.EmailChangeConfirmSchema,
+    db: Session = Depends(get_db),
+    usuario_id: int = Depends(get_current_user_id),
+    service: PerfilService = Depends(lambda: perfil_service_instance)
+):
+    """
+    Endpoint para confirmar alteração de email - segunda etapa.
+    Valida o código de verificação e atualiza o email se válido.
+    """
+    return service.confirm_email_change(db, usuario_id, email_confirm)

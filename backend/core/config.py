@@ -17,6 +17,12 @@ class Settings:
     DATABASE_URL: str = os.getenv("DATABASE_URL")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "chave_secreta_desenvolvimento_nao_usar_em_producao")
     
+    ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS")
+    
+    @property
+    def cors_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+    
     def __init__(self):
         if not self.DATABASE_URL:
             raise ValueError("DATABASE_URL não foi encontrada nas variáveis de ambiente!")
