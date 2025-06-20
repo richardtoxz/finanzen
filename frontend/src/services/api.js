@@ -1,5 +1,4 @@
-// const API_URL = 'https://finanzen-production.up.railway.app';   descomente para produção
-const API_URL = 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const createApiError = (errorData, responseStatus, defaultMessage) => {
     const customError = new Error(defaultMessage || 'Ocorreu um erro na solicitação à API.');
