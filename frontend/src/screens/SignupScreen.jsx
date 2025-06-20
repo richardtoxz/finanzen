@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { Check, X } from 'lucide-react';
 import Input from '../components/Input';
 import AuthLayout from '../layouts/AuthLayout';
 import { useForm } from '../hooks/useForm';
-import { validateEmail, getPasswordErrors } from '../utils/validation';
+import { validateEmail, validatePasswordRules, getPasswordErrors } from '../utils/validation';
 
 const SignupScreen = ({ onSignup, onSwitchToLogin }) => {
   const { formData, handleChange, errors, validate } = useForm(
@@ -22,6 +23,8 @@ const SignupScreen = ({ onSignup, onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const passwordRules = validatePasswordRules(formData.password);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,6 +43,13 @@ const SignupScreen = ({ onSignup, onSwitchToLogin }) => {
       setIsLoading(false);
     }
   };
+
+  const ValidationRule = ({ satisfied, text }) => (
+    <div className={`flex items-center gap-2 ${satisfied ? 'text-green-600' : 'text-gray-400'}`}>
+      {satisfied ? <Check size={16} className=''/> : <X size={16} />}
+      <span className="text-sm">{text}</span>
+    </div>
+  );
 
   return (
     <AuthLayout>
@@ -70,28 +80,44 @@ const SignupScreen = ({ onSignup, onSwitchToLogin }) => {
             required
           />
 
-          <Input
-            label="Senha"
-            type={showPassword ? "text" : "password"}
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            error={errors.password}
-            required
-            showPasswordToggle
-            onTogglePassword={() => setShowPassword(!showPassword)}
-          />
+          <div className="space-y-2">
+            <Input
+              label="Senha"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              error={errors.password}
+              required
+              showPasswordToggle
+              isPasswordVisible={showPassword}
+              onTogglePasswordVisibility={() => setShowPassword(!showPassword)}
+            />
+            {formData.password && (
+              <div className="p-3 bg-gray-50 rounded-lg space-y-2">
+                <ValidationRule satisfied={passwordRules.length} text="Mínimo 8 caracteres" />
+                {formData.password.length > 82 && (
+                  <ValidationRule satisfied={passwordRules.maxLength} text="Máximo 82 caracteres" />
+                )}
+                <ValidationRule satisfied={passwordRules.uppercase} text="Pelo menos 1 letra maiúscula" />
+                <ValidationRule satisfied={passwordRules.lowercase} text="Pelo menos 1 letra minúscula" />
+                <ValidationRule satisfied={passwordRules.numeric} text="Pelo menos 1 número" />
+                <ValidationRule satisfied={passwordRules.special} text="Pelo menos 1 caractere especial" />
+              </div>
+            )}
+          </div>
 
           <Input
             label="Confirmar Senha"
-            type={showConfirm ? "text" : "password"}
+            type="password"
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
             error={errors.confirmPassword}
             required
             showPasswordToggle
-            onTogglePassword={() => setShowConfirm(!showConfirm)}
+            isPasswordVisible={showConfirm}
+            onTogglePasswordVisibility={() => setShowConfirm(!showConfirm)}
           />
 
           <button
