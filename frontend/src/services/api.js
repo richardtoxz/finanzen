@@ -76,7 +76,7 @@ export const api = {
             rendaMensalPreferencias: sanitizeInput(userData.income)
         };
 
-        const response = await fetch(`${API_URL}/auth/register`, {
+        const response = await fetch(`${API_URL}/auth/register/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ export const api = {
     },
 
     async verifyEmail(email, verificationCode) {
-        const response = await fetch(`${API_URL}/auth/verify-email`, {
+        const response = await fetch(`${API_URL}/auth/verify-email/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ export const api = {
             senha: sanitizeInput(credentials.senha || credentials.password)
         };
 
-        const response = await fetch(`${API_URL}/auth/login`, {
+        const response = await fetch(`${API_URL}/auth/login/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -145,9 +145,9 @@ export const api = {
     },
 
     async getCategorias() {
-        return authenticatedFetch(`${API_URL}/categorias`);
+        return authenticatedFetch(`${API_URL}/categorias/`);
     }, async createCategoria(data) {
-        return authenticatedFetch(`${API_URL}/categorias`, {
+        return authenticatedFetch(`${API_URL}/categorias/`, {
             method: 'POST',
             body: JSON.stringify({
                 nome: sanitizeInput(data.name),
@@ -155,7 +155,7 @@ export const api = {
             })
         });
     }, async updateCategoria(id, data) {
-        return authenticatedFetch(`${API_URL}/categorias/${id}`, {
+        return authenticatedFetch(`${API_URL}/categorias/${id}/`, {
             method: 'PUT',
             body: JSON.stringify({
                 nome: sanitizeInput(data.name),
@@ -165,7 +165,7 @@ export const api = {
     },
 
     async deleteCategoria(id) {
-        return authenticatedFetch(`${API_URL}/categorias/${id}`, {
+        return authenticatedFetch(`${API_URL}/categorias/${id}/`, {
             method: 'DELETE'
         });
     },
@@ -179,11 +179,11 @@ export const api = {
         if (filtros.dataFim) params.append('dataFim', filtros.dataFim);
 
         const queryString = params.toString();
-        const url = queryString ? `${API_URL}/transacoes?${queryString}` : `${API_URL}/transacoes`;
+        const url = queryString ? `${API_URL}/transacoes/?${queryString}` : `${API_URL}/transacoes/`;
 
         return authenticatedFetch(url);
     }, async createTransacao(data) {
-        return authenticatedFetch(`${API_URL}/transacoes`, {
+        return authenticatedFetch(`${API_URL}/transacoes/`, {
             method: 'POST',
             body: JSON.stringify({
                 tipo: sanitizeInput(data.type).toLowerCase(),
@@ -195,7 +195,7 @@ export const api = {
             })
         });
     }, async updateTransacao(id, data) {
-        return authenticatedFetch(`${API_URL}/transacoes/${id}`, {
+        return authenticatedFetch(`${API_URL}/transacoes/${id}/`, {
             method: 'PUT',
             body: JSON.stringify({
                 tipo: sanitizeInput(data.type).toLowerCase(),
@@ -208,15 +208,15 @@ export const api = {
     },
 
     async deleteTransacao(id) {
-        return authenticatedFetch(`${API_URL}/transacoes/${id}`, {
+        return authenticatedFetch(`${API_URL}/transacoes/${id}/`, {
             method: 'DELETE'
         });
     },
 
     async getMetas() {
-        return authenticatedFetch(`${API_URL}/metas`);
+        return authenticatedFetch(`${API_URL}/metas/`);
     }, async createMeta(data) {
-        return authenticatedFetch(`${API_URL}/metas`, {
+        return authenticatedFetch(`${API_URL}/metas/`, {
             method: 'POST',
             body: JSON.stringify({
                 nome: sanitizeInput(data.nome),
@@ -228,7 +228,7 @@ export const api = {
     },
 
     async updateMeta(id, data) {
-        return authenticatedFetch(`${API_URL}/metas/${id}`, {
+        return authenticatedFetch(`${API_URL}/metas/${id}/`, {
             method: 'PUT',
             body: JSON.stringify({
                 nome: sanitizeInput(data.nome),
@@ -240,7 +240,7 @@ export const api = {
     },
 
     async deleteMeta(id) {
-        return authenticatedFetch(`${API_URL}/metas/${id}`, {
+        return authenticatedFetch(`${API_URL}/metas/${id}/`, {
             method: 'DELETE'
         });
     },
@@ -253,13 +253,13 @@ export const api = {
         if (filtros.categoria_id) params.append('categoria_id', filtros.categoria_id);
 
         const queryString = params.toString();
-        const url = queryString ? `${API_URL}/orcamentos?${queryString}` : `${API_URL}/orcamentos`;
+        const url = queryString ? `${API_URL}/orcamentos/?${queryString}` : `${API_URL}/orcamentos/`;
 
         return authenticatedFetch(url);
     },
 
     async createOrcamento(data) {
-        return authenticatedFetch(`${API_URL}/orcamentos`, {
+        return authenticatedFetch(`${API_URL}/orcamentos/`, {
             method: 'POST',
             body: JSON.stringify({
                 nome: sanitizeInput(data.nome),
@@ -272,7 +272,7 @@ export const api = {
     },
 
     async updateOrcamento(id, data) {
-        return authenticatedFetch(`${API_URL}/orcamentos/${id}`, {
+        return authenticatedFetch(`${API_URL}/orcamentos/${id}/`, {
             method: 'PUT',
             body: JSON.stringify({
                 nome: sanitizeInput(data.nome),
@@ -285,29 +285,28 @@ export const api = {
     },
 
     async deleteOrcamento(id) {
-        return authenticatedFetch(`${API_URL}/orcamentos/${id}`, {
+        return authenticatedFetch(`${API_URL}/orcamentos/${id}/`, {
             method: 'DELETE'
         });
     },
 
     async getDashboardSummary() {
-        return authenticatedFetch(`${API_URL}/transacoes/dashboard/summary`);
+        return authenticatedFetch(`${API_URL}/transacoes/dashboard/summary/`);
     },    async getReportsData(periodo = 'mes_atual') {
         const validPeriodos = ['mes_atual', 'mes_anterior', 'ano_atual'];
         const periodoSanitized = validPeriodos.includes(periodo) ? periodo : 'mes_atual';
         
-        return authenticatedFetch(`${API_URL}/relatorios/dados?periodo=${periodoSanitized}`);
+        return authenticatedFetch(`${API_URL}/relatorios/dados/?periodo=${periodoSanitized}`);
     },
 
     async getUserProfile() {
-        return authenticatedFetch(`${API_URL}/perfil`);
+        return authenticatedFetch(`${API_URL}/perfil/`);
     },    async updateUserProfile(profileData) {
         const sanitizedData = {};
         
         if (profileData.nomeUsuario !== undefined) {
             sanitizedData.nomeUsuario = sanitizeInput(profileData.nomeUsuario);
         }
-        // Removido email - agora usa fluxo seguro de duas etapas
         if (profileData.objetivoPreferencias !== undefined) {
             sanitizedData.objetivoPreferencias = sanitizeInput(profileData.objetivoPreferencias);
         }
@@ -315,14 +314,14 @@ export const api = {
             sanitizedData.rendaMensalPreferencias = sanitizeInput(profileData.rendaMensalPreferencias);
         }
 
-        return authenticatedFetch(`${API_URL}/perfil`, {
+        return authenticatedFetch(`${API_URL}/perfil/`, {
             method: 'PUT',
             body: JSON.stringify(sanitizedData)
         });
     },
 
     async updateUserPassword(passwordData) {
-        return authenticatedFetch(`${API_URL}/perfil/senha`, {
+        return authenticatedFetch(`${API_URL}/perfil/senha/`, {
             method: 'PUT',
             body: JSON.stringify({
                 senha_atual: sanitizeInput(passwordData.senha_atual),
@@ -332,7 +331,7 @@ export const api = {
     },
 
     async requestEmailChange(newEmail) {
-        return authenticatedFetch(`${API_URL}/perfil/solicitar-alteracao-email`, {
+        return authenticatedFetch(`${API_URL}/perfil/solicitar-alteracao-email/`, {
             method: 'POST',
             body: JSON.stringify({
                 novo_email: sanitizeInput(newEmail)
@@ -341,7 +340,7 @@ export const api = {
     },
 
     async confirmEmailChange(emailData) {
-        return authenticatedFetch(`${API_URL}/perfil/confirmar-alteracao-email`, {
+        return authenticatedFetch(`${API_URL}/perfil/confirmar-alteracao-email/`, {
             method: 'PUT',
             body: JSON.stringify({
                 novo_email: sanitizeInput(emailData.novo_email),
