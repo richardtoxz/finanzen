@@ -8,3 +8,4 @@ pytest
 httpx
 email-validator
 cryptography
+gunicorn
