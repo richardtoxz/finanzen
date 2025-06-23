@@ -7,7 +7,8 @@ Teste de login senha invalido
     Digitar email valido
     Digitar senha invalida
     Clicar no botao entrar
-    Sleep    5s
+    Verificar Mensagem de erro
+    Sleep    2s
 
 *** Keywords ***
 Abrir a pagina do finanzen
@@ -18,3 +19,6 @@ Digitar senha invalida
     Input Password   xpath=//input[@name='password']    robot123*
 Clicar no botao entrar
     Click Button    xpath=//button[@type='submit']
+Verificar Mensagem de erro
+    Wait Until Element Is Visible    xpath=//*[contains(text(), 'Senha incorreta')]    5s
+    Element Should Be Visible        xpath=//*[contains(text(), 'Senha incorreta')]  
