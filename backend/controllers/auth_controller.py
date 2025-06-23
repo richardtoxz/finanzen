@@ -52,15 +52,21 @@ def login_user_endpoint(
     db: Session = Depends(get_db),
     service: AuthService = Depends(lambda: auth_service_instance)
 ):
-    user = service.login_user(db=db, login_data=login_data)
-    preferencias_obj = user.preferencias
+    try:
+        user = service.login_user(db=db, login_data=login_data)
+        preferencias_obj = user.preferencias
 
-    user_resp = schemas.UserResponseSchema(
-        idUsuario=user.idUsuario,
-        nomeUsuario=user.nomeUsuario,
-        email=user.credenciais.email,
-        is_verified=user.is_verified,
-        objetivoPreferencias=preferencias_obj.objetivoPreferencias if preferencias_obj else None,
-        rendaMensalPreferencias=preferencias_obj.rendaMensalPreferencias if preferencias_obj else None
-    )
-    return schemas.LoginSuccessResponseSchema(message="Login successful", user=user_resp)
+        user_resp = schemas.UserResponseSchema(
+            idUsuario=user.idUsuario,
+            nomeUsuario=user.nomeUsuario,
+            email=user.credenciais.email,
+            is_verified=user.is_verified,
+            objetivoPreferencias=preferencias_obj.objetivoPreferencias if preferencias_obj else None,
+            rendaMensalPreferencias=preferencias_obj.rendaMensalPreferencias if preferencias_obj else None
+        )
+        return schemas.LoginSuccessResponseSchema(message="Login successful", user=user_resp)
+    except HTTPException as e:
+        raise e
+    except Exception as e_gen:
+        print(f"Erro inesperado no login: {e_gen}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erro interno ao processar login.")

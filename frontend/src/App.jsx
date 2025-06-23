@@ -58,8 +58,10 @@ export default function App() {
         setUser(response.user);
         setScreen('app');
       } catch (error) {
-        const errorMessage = error.message || 'Erro ao fazer login';
-        alert(errorMessage);
+        const errorMessage = error.response?.data?.detail || error.message || 'Erro ao fazer login';
+        const customError = new Error(errorMessage);
+        customError.response = error.response;
+        throw customError;
       }
     },
 

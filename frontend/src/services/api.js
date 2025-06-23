@@ -112,25 +112,31 @@ export const api = {
         }
 
         return response.json();
-    },
-
+    },    
+        
     async login(credentials) {
         const loginData = {
             email: sanitizeInput(credentials.email),
             senha: sanitizeInput(credentials.senha || credentials.password)
         };
 
-        const response = await fetch(`${API_URL}/auth/login/`, {
+         const response = await fetch(`${API_URL}/auth/login/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(loginData),
-        }); if (!response.ok) {
+        });
+
+        if (!response.ok) {
             const errorData = await response.json();
             console.error('Erro na resposta (login):', errorData);
-            throw createApiError(errorData, response.status, 'Falha na tentativa de login.');
-        } const loginResponse = await response.json();
+            
+            const errorMessage = errorData.detail || 'Falha na tentativa de login.';
+            throw createApiError(errorData, response.status, errorMessage);
+        }
+
+        const loginResponse = await response.json();
 
         if (loginResponse.user && loginResponse.user.idUsuario) {
             const userId = loginResponse.user.idUsuario.toString();
@@ -139,7 +145,7 @@ export const api = {
         }
 
         return loginResponse;
-    }, logout() {
+    },logout() {
         clearAuthData();
 
     },
