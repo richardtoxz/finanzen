@@ -13,6 +13,7 @@ ${opcao_categoria}            xpath=(//select[contains(@class,'block w-full bg-w
 *** Keywords ***
 Dado que o usuário acessa a “Tela Inicial” 
     Open Browser      https://richardtoxz.github.io/finanzen/    chrome
+    Set Window Size  1280    800
     Input Text        ${input_email}    marialuiza.barbosa.ux@gmail.com
     Input Password    ${input_senha}    Teste123!
     Click Button      ${botton_entrar}

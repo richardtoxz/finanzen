@@ -10,6 +10,7 @@ ${botton_relatorios}    //span[@class='text-sm'][contains(.,'Relatórios')]
 *** Keywords ***
 Dado que o usuário acessa a página de relatórios 
     Open Browser      https://richardtoxz.github.io/finanzen/    chrome
+    Set Window Size  1280    800
     Input Text        ${input_email}    marialuiza.barbosa.ux@gmail.com
     Input Password    ${input_senha}    Teste123!
     Click Button      ${botton_entrar}
