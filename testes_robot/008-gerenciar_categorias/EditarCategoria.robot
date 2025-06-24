@@ -6,7 +6,7 @@ ${input_email}                   name:email
 ${input_senha}                   name:password
 ${botton_entrar}                 //button[@type='submit']
 ${botton_gerenciar_categoria}    xpath=//span[contains(.,'Gerenciar Categorias')]
-${icon_editar}                   xpath=//svg[contains(@viewBox,'0 0 24 24')]
+${icon_editar}                   xpath=//button[@title='Editar']
 ${botton_salvar_edicao}          xpath=//button[@title='Salvar']
 ${input_nome_categoria}          xpath=//input[contains(@type,'text')]
 
