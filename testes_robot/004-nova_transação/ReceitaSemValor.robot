@@ -2,7 +2,7 @@
 Library    SeleniumLibrary
 
 *** Test Cases ***
-Teste de login
+Teste de receita sem valor
     Set Selenium Speed    0.1s
     Abrir a pagina do finanzen
     Digitar email valido

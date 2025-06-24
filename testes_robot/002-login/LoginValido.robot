@@ -2,7 +2,7 @@
 Library    SeleniumLibrary
 
 *** Test Cases ***
-Teste de login
+Teste de login valido
     Set Selenium Speed     0.3s
     Abrir a pagina do finanzen
     Digitar email valido

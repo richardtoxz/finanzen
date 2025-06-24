@@ -5,7 +5,7 @@ Resource    ../002-login/LoginSenhaInvalida.robot
 Resource    ../002-login/LoginEmailInvalido.robot
 
 *** Test Cases ***
-Teste de cadastro valido
+Teste de cadastro senha invalida
     Abrir a pagina do finanzen
     Clicar em criar conta
     Digitar nome
