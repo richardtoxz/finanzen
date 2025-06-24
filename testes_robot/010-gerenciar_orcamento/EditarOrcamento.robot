@@ -15,6 +15,7 @@ ${botton_salvar_alteracoes}        xpath=//button[contains(.,'Salvar Alteraçõe
 Dado que o usuário acessa a página “Tela Inicial” acionando a opção no menu 
     Sleep             4s
     Open Browser      https://richardtoxz.github.io/finanzen/    chrome
+    Set Window Size  1280    800
     Input Text        ${input_email}    marialuiza.barbosa.ux@gmail.com
     Input Password    ${input_senha}    Teste123!
     Click Button      ${botton_entrar}

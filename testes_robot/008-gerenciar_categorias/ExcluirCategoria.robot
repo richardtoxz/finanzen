@@ -13,6 +13,7 @@ ${button_confirmar_excluir}      xpath=//button[contains(.,'Excluir')]
 Dado que o usuário acessa a "Tela Inicial"
     Sleep             2s
     Open Browser      https://richardtoxz.github.io/finanzen/    chrome
+    Set Window Size  1280    800
     Input Text        ${input_email}    marialuiza.barbosa.ux@gmail.com
     Input Password    ${input_senha}    Teste123!
     Click Button      ${botton_entrar}

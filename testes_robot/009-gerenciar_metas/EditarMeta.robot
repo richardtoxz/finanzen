@@ -16,6 +16,7 @@ ${card_meta}                     xpath=//p[contains(@class,'font-medium')]
 Dado que o usuário acessa a página de “Metas” acionando a opção no menu 
     Sleep             2s
     Open Browser      https://richardtoxz.github.io/finanzen/    chrome
+    Set Window Size  1280    800
     Input Text        ${input_email}    marialuiza.barbosa.ux@gmail.com
     Input Password    ${input_senha}    Teste123!
     Click Button      ${botton_entrar}
