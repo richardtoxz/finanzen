@@ -30,7 +30,7 @@ Clicar em criar conta
 Digitar nome
     Input Text    xpath=//input[@name='name']    Criando Conta
 Digitar email valido
-    Input Text    xpath = //input[@name='email']    criandoconta15@gmail.com
+    Input Text    xpath = //input[@name='email']    criandocontamilvezes@gmail.com
 Digitar senha valida
     Input Password    xpath=//input[@name='password']    Robotconta123*
 Confirmar senha valida
