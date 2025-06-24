@@ -1,6 +1,7 @@
 *** Settings ***
 
 Library    SeleniumLibrary
+Library    Telnet
 Resource    ../002-login/LoginSenhaInvalida.robot
 Resource    ../002-login/LoginEmailInvalido.robot
 
@@ -29,7 +30,7 @@ Clicar em criar conta
 Digitar nome
     Input Text    xpath=//input[@name='name']    Criando Conta
 Digitar email valido
-    Input Text    xpath = //input[@name='email']    criandoconta9@gmail.com
+    Input Text    xpath = //input[@name='email']    criandoconta14@gmail.com
 Digitar senha valida
     Input Password    xpath=//input[@name='password']    Robotconta123*
 Confirmar senha valida
@@ -47,8 +48,10 @@ Codigo de verificação
 Botão Verificar
     Click Button    xpath=//button[@type='submit']
 Escolher objetivo
-    Click Element    xpath=//button[.//p[contains(text(), 'Quitar minhas dívidas')]]
+    Wait Until Element Is Visible    xpath=//p[@class='text-sm font-medium text-gray-800 pr-6'][contains(.,'Quitar minhas dívidas')]
+    Click Element    xpath=//p[@class='text-sm font-medium text-gray-800 pr-6'][contains(.,'Quitar minhas dívidas')]
 Escolher renda 
-    Select Checkbox   id:no-answer
+    Wait Until Element Is Visible    xpath=//p[contains(.,'Prefiro não responder')]
+    Click Element    xpath=//p[contains(.,'Prefiro não responder')]
 Clicar no botao proximo
     Click Button    xpath=//button[contains(.,'Próximo')]
