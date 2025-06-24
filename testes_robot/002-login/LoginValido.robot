@@ -3,11 +3,11 @@ Library    SeleniumLibrary
 
 *** Test Cases ***
 Teste de login
+    Set Selenium Speed     0.3s
     Abrir a pagina do finanzen
     Digitar email valido
     Digitar senha valida
     Clicar no botao entrar
-    Sleep    5s
 
 *** Keywords ***
 Abrir a pagina do finanzen
